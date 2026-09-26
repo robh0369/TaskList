@@ -1,5 +1,6 @@
 import type { Category, Collections, Member, Task } from '../api/types';
 import { addDays, today } from './dates';
+import { STEP } from './rank';
 
 /**
  * Member colors are the first categorical slots of the reference data-viz palette
@@ -57,7 +58,8 @@ export function blankTask(partial: Partial<Task> = {}): Task {
     parentId: '',
     dueDate: '',
     priority: 'med',
-    effort: 2,
+    // Position within its priority section: new tasks go to the bottom (see lib/rank.ts).
+    effort: Date.now(),
     status: 'open',
     recurrence: null,
     createdBy: '',
@@ -78,16 +80,16 @@ export function demoSeed(): Collections {
   members[1].name = 'Sam';
   const cats = defaultCategories();
   const tasks: Task[] = [
-    blankTask({ title: 'Replace furnace filter', assigneeId: 'm2', categoryId: 'c2', effort: 1 }),
-    blankTask({ title: 'Pay electric bill', assigneeId: 'm1', categoryId: 'c5', priority: 'high', effort: 1 }),
+    blankTask({ title: 'Replace furnace filter', assigneeId: 'm2', categoryId: 'c2' }),
+    blankTask({ title: 'Pay electric bill', assigneeId: 'm1', categoryId: 'c5', priority: 'high' }),
     blankTask({ title: 'Mow the lawn', assigneeId: 'm1', categoryId: 'c4', priority: 'high' }),
-    blankTask({ title: 'Clean out fridge', assigneeId: 'both', categoryId: 'c1', effort: 2 }),
+    blankTask({ title: 'Clean out fridge', assigneeId: 'both', categoryId: 'c1' }),
     blankTask({ title: 'Oil change', assigneeId: 'm2', categoryId: 'c8', priority: 'low' }),
-    blankTask({ title: 'Buy paint & supplies', assigneeId: 'm2', categoryId: 'c6', effort: 2 }),
-    blankTask({ title: 'Patch & sand walls', assigneeId: 'm1', categoryId: 'c7', effort: 4 }),
-    blankTask({ title: 'Paint walls (2 coats)', assigneeId: 'both', categoryId: 'c7', effort: 5 }),
+    blankTask({ title: 'Buy paint & supplies', assigneeId: 'm2', categoryId: 'c6' }),
+    blankTask({ title: 'Patch & sand walls', assigneeId: 'm1', categoryId: 'c7' }),
+    blankTask({ title: 'Paint walls (2 coats)', assigneeId: 'both', categoryId: 'c7' }),
     blankTask({ title: 'Organize garage shelves', assigneeId: 'm2', categoryId: 'c2', priority: 'low' }),
-  ];
+  ].map((task, i) => ({ ...task, effort: (i + 1) * STEP }));
   // A few weeks of history so reports aren't empty.
   const completions = [];
   const titles: [string, string, number][] = [

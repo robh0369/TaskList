@@ -1,4 +1,5 @@
 import type { Category, Collections, Member, Task } from '../api/types';
+import { rankOf } from '../lib/rank';
 
 export function activeMembers(d: Collections): Member[] {
   return d.members.filter((m) => !m.deleted);
@@ -21,11 +22,16 @@ export function isMine(t: Task, meId: string): boolean {
   return !meId || t.assigneeId === meId || t.assigneeId === 'both' || t.assigneeId === '';
 }
 
-const RANK = { high: 0, med: 1, low: 2 };
+const PRIORITY_ORDER = { high: 0, med: 1, low: 2 };
 
-/** Open first, then High → Medium → Low, then oldest first (it's been waiting longest). */
+/**
+ * Open first, then High → Medium → Low, then the position set by dragging,
+ * then oldest first (so untouched sections keep their waiting-longest order).
+ */
 export function sortTasks(a: Task, b: Task): number {
   if (a.status !== b.status) return a.status === 'open' ? -1 : 1;
-  if (a.priority !== b.priority) return RANK[a.priority] - RANK[b.priority];
-  return a.createdAt.localeCompare(b.createdAt);
+  if (a.priority !== b.priority) return PRIORITY_ORDER[a.priority] - PRIORITY_ORDER[b.priority];
+  const r = rankOf(a) - rankOf(b);
+  if (r !== 0) return r;
+  return a.createdAt.localeCompare(b.createdAt) || a.id.localeCompare(b.id);
 }

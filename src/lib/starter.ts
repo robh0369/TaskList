@@ -1,5 +1,6 @@
 import type { Category, Collections, Member, Priority, Task } from '../api/types';
 import { blankTask } from './defaults';
+import { STEP } from './rank';
 
 /**
  * Rob & Rebecca's starting list, transcribed from the handwritten sheet.
@@ -76,7 +77,7 @@ export function planStarterImport(data: Collections, meId = ''): StarterPlan {
   const tasks = STARTER_TASKS.flatMap(([title, assigneeId, categoryId, priority], i) =>
     have.has(starterId(i))
       ? []
-      : [blankTask({ id: starterId(i), title, assigneeId, categoryId, priority, createdBy: meId })],
+      : [blankTask({ id: starterId(i), title, assigneeId, categoryId, priority, effort: (i + 1) * STEP, createdBy: meId })],
   );
 
   const categories: Category[] = [];
