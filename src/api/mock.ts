@@ -3,7 +3,6 @@ import type { AnyRecord, Backend, Collections, Mutation, Row, SyncResult } from 
 import { COLLECTIONS } from './types';
 
 const DB_KEY = 'tasklist.demo.db';
-const PHOTO_KEY = 'tasklist.demo.photo.';
 
 interface DemoDb {
   rev: number;
@@ -69,24 +68,6 @@ export class DemoBackend implements Backend {
     }
     save(db);
     return { rev: db.rev, changes: {} };
-  }
-
-  async uploadPhoto(dataUrl: string): Promise<{ fileId: string; url: string }> {
-    const fileId = 'demo-' + Date.now().toString(36);
-    try {
-      localStorage.setItem(PHOTO_KEY + fileId, dataUrl);
-    } catch {
-      /* too big for demo storage; the photo just won't persist */
-    }
-    return { fileId, url: dataUrl };
-  }
-
-  photoUrl(fileId: string): string {
-    try {
-      return localStorage.getItem(PHOTO_KEY + fileId) ?? '';
-    } catch {
-      return '';
-    }
   }
 
   static reset() {

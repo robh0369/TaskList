@@ -69,6 +69,7 @@ export interface Comment extends Row {
   taskId: ID;
   authorId: string;
   body: string;
+  /** Unused; kept so existing sheets keep their column layout. */
   photoFileId: string;
   createdAt: string;
   updatedAt: string;
@@ -142,8 +143,6 @@ export interface Backend {
   /** Full data when since is 0, otherwise rows with _rev > since. */
   pull(since: number): Promise<SyncResult>;
   push(mutations: Mutation[]): Promise<SyncResult>;
-  uploadPhoto(dataUrl: string, name: string): Promise<{ fileId: string; url: string }>;
-  photoUrl(fileId: string): string;
 }
 
 export class AuthError extends Error {}

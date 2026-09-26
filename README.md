@@ -6,7 +6,7 @@ A shared chore and project list for a two-person household. It installs on your 
 - **Quick add:** type `Mow lawn sat @Sam #Yard every 2 weeks !high` and the date, person, category, repeat rule and priority fill themselves in
 - **Recurring chores:** daily, weekly (on chosen weekdays), or monthly, either *on schedule* or *counted from when it was done*
 - **Projects:** group bigger jobs into tasks, with a progress ring and a target date. Tasks can also have their own checklist of subtasks.
-- **Comments and photos** on any task, for example "before and after" or "here's the model number"
+- **Comments** on any task, for example "bought the filter, it's in the garage"
 - **Reports:** the workload split between you (by task count or by effort points), completions per week, on-time rate, a breakdown by category, and lists of overdue and stale tasks
 - **Works offline:** changes queue up on the phone and sync when you're back online, and light and dark mode follow the phone's setting
 
@@ -24,17 +24,19 @@ The app opens in **demo mode** with sample data that's saved on that one device 
 
 This takes about 5 minutes, and one person does it once.
 
+> **On a phone?** The Google Sheets phone app has no **Extensions** menu or Apps Script editor. Do this setup once on a computer. On a phone, you can instead open **sheets.google.com in Chrome** and turn on **⋮ → Desktop site**; the full menu bar, including **Extensions**, then appears. To copy the script on a phone, open the [raw Code.gs](https://raw.githubusercontent.com/robh0369/TaskList/main/apps-script/Code.gs) and use Select all → Copy.
+
 1. Create a new, blank Google Sheet (for example "Home Tasks").
 2. In the Sheet, open **Extensions → Apps Script**.
-3. Delete the starter code, paste in everything from [`apps-script/Code.gs`](apps-script/Code.gs), and click **Save**.
+3. Delete the starter code, paste in everything from [`apps-script/Code.gs`](apps-script/Code.gs) (or the [raw version](https://raw.githubusercontent.com/robh0369/TaskList/main/apps-script/Code.gs), which is easier to copy), and click **Save**.
 4. Set a household passcode. Click **Project Settings** (the ⚙️ icon on the left), then under **Script properties** click **Add script property**. Enter **Property** `PASSCODE` and **Value** your passcode (something neither of you will mind typing once per phone), then **Save**.
-5. Back in the **Editor**, choose `setup` in the function dropdown and click **Run**. Google will ask you to authorize the script. Click through **Advanced → Go to (project) (unsafe)**; it says "unsafe" only because this is your own unpublished script. This step creates the tabs (Tasks, Completions, Projects, Comments, Members, Categories) and a Drive folder for photos.
+5. Back in the **Editor**, choose `setup` in the function dropdown and click **Run**. Google will ask you to authorize the script. Click through **Advanced → Go to (project) (unsafe)**; it says "unsafe" only because this is your own unpublished script. This step creates the tabs (Tasks, Completions, Projects, Comments, Members, Categories). The script only needs access to this Sheet, not your Drive.
 6. Click **Deploy → New deployment**. Click the gear icon, choose **Web app**, and set:
    - **Execute as:** Me
    - **Who has access:** Anyone
 
    Click **Deploy** and copy the **Web app URL** (it ends in `/exec`).
-7. On each phone, open the app, go to **Settings** (tap your avatar at the top right), paste the URL, enter the passcode, and tap **Connect**.
+7. Put the Web app URL in `.github/workflows/deploy.yml` (the `VITE_API_URL` line) so it's built into the app. On each phone, the app then asks only for the passcode, once. (You can also paste a URL by hand under **Settings → Shared data**.)
 8. Install it on the home screen:
    - **iPhone (Safari):** tap Share → **Add to Home Screen**
    - **Android (Chrome):** tap the menu → **Install app**
@@ -48,7 +50,6 @@ If `Code.gs` changes, paste the new version and use **Deploy → Manage deployme
 - Each tab is a plain table, so you can read, filter or chart it in Sheets. Avoid editing the header row or the `id` and `_rev` columns by hand.
 - Deletes are "soft": the row stays with `deleted = TRUE`, which lets undo work across devices.
 - `Completions` is an append-only history of every time a task was done. The reports are built from it, so a recurring chore keeps its full history.
-- Photos are saved in a Drive folder called **Home Tasks Photos** and shared as "anyone with the link" so the app can display them. The links are long and random, but don't attach anything sensitive.
 
 ### Security, in plain terms
 The site itself is public (that's how GitHub Pages works), but it contains no data. Every request to your Sheet must include the passcode, and the script rejects any request without it. The Sheet stays private to your Google account. This is appropriate for a chore list, but not for anything sensitive.

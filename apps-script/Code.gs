@@ -10,6 +10,7 @@ var SCHEMA = {
   tasks: ['id', 'title', 'notes', 'assigneeId', 'categoryId', 'projectId', 'parentId', 'dueDate', 'priority', 'effort', 'status', 'recurrence', 'createdBy', 'createdAt', 'updatedAt', 'completedAt', 'completedBy', 'deleted', '_rev'],
   completions: ['id', 'taskId', 'title', 'completedBy', 'completedAt', 'dueDate', 'effort', 'categoryId', 'updatedAt', 'deleted', '_rev'],
   projects: ['id', 'name', 'description', 'ownerId', 'targetDate', 'color', 'status', 'createdAt', 'updatedAt', 'deleted', '_rev'],
+  // photoFileId is unused (photos were removed) but kept so existing sheets still match.
   comments: ['id', 'taskId', 'authorId', 'body', 'photoFileId', 'createdAt', 'updatedAt', 'deleted', '_rev'],
   members: ['id', 'name', 'color', 'updatedAt', 'deleted', '_rev'],
   categories: ['id', 'name', 'icon', 'sortOrder', 'updatedAt', 'deleted', '_rev'],
@@ -28,8 +29,6 @@ var NUMBER_FIELDS = { effort: 1, sortOrder: 1, _rev: 1 };
 var BOOL_FIELDS = { deleted: 1 };
 var JSON_FIELDS = { recurrence: 1 };
 var DATE_FIELDS = { dueDate: 1, targetDate: 1 };
-
-var PHOTO_FOLDER = 'Home Tasks Photos';
 
 // ---------------------------------------------------------------------------
 // Entry points
@@ -65,17 +64,14 @@ function handle(req) {
       return pull(Number(req.since) || 0);
     case 'push':
       return push(req.mutations || []);
-    case 'uploadPhoto':
-      return uploadPhoto(req.dataUrl, req.name);
     default:
       return { ok: false, error: 'unknown action' };
   }
 }
 
-/** Run once from the editor: creates the tabs and asks for Drive/Sheets permission. */
+/** Run once from the editor: creates the tabs and asks for Sheets permission. */
 function setup() {
   ensureSchema();
-  getPhotoFolder();
   if (!PropertiesService.getScriptProperties().getProperty('PASSCODE')) {
     Logger.log('Now add a script property named PASSCODE (Project Settings → Script properties).');
   }
@@ -147,26 +143,6 @@ function push(mutations) {
   } finally {
     lock.releaseLock();
   }
-}
-
-// ---------------------------------------------------------------------------
-// Photos
-
-function getPhotoFolder() {
-  var it = DriveApp.getFoldersByName(PHOTO_FOLDER);
-  return it.hasNext() ? it.next() : DriveApp.createFolder(PHOTO_FOLDER);
-}
-
-function uploadPhoto(dataUrl, name) {
-  var match = /^data:(image\/[\w.+-]+);base64,(.+)$/.exec(String(dataUrl || ''));
-  if (!match) return { ok: false, error: 'not an image' };
-  var bytes = Utilities.base64Decode(match[2]);
-  if (bytes.length > 5 * 1024 * 1024) return { ok: false, error: 'photo too large' };
-  var blob = Utilities.newBlob(bytes, match[1], String(name || 'photo.jpg').slice(0, 120));
-  var file = getPhotoFolder().createFile(blob);
-  // Viewable by link so the app can show it; the ID is long and unguessable.
-  file.setSharing(DriveApp.Access.ANYONE_WITH_LINK, DriveApp.Permission.VIEW);
-  return { ok: true, fileId: file.getId(), url: 'https://drive.google.com/thumbnail?id=' + file.getId() + '&sz=w1200' };
 }
 
 // ---------------------------------------------------------------------------

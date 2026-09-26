@@ -1,14 +1,13 @@
-import { useMemo, useRef, useState } from 'preact/hooks';
+import { useMemo, useState } from 'preact/hooks';
 import type { Comment, Recurrence, Task } from '../api/types';
 import { addDays, parseISODate, today, weekdayName } from '../lib/dates';
 import { blankTask, uid } from '../lib/defaults';
-import { compressImage } from '../lib/image';
 import { parseQuickAdd } from '../lib/quickadd';
 import { describeRecurrence } from '../lib/recurrence';
 import { activeCategories, activeMembers, activeProjects, sortTasks } from '../store/selectors';
-import { completeTask, getBackend, remove, reopenTask, save, showToast, useStore } from '../store/store';
+import { completeTask, remove, reopenTask, save, showToast, useStore } from '../store/store';
 import { Avatar, Seg, Sheet } from './common';
-import { IconCamera, IconCheck, IconClose, IconPlus, IconSend, IconTrash } from './icons';
+import { IconCheck, IconClose, IconPlus, IconSend, IconTrash } from './icons';
 
 export interface TaskSheetProps {
   task?: Task;
@@ -323,38 +322,14 @@ function Comments({ task }: { task: Task }) {
     [data.comments, task.id],
   );
   const [text, setText] = useState('');
-  const [photo, setPhoto] = useState('');
-  const [busy, setBusy] = useState(false);
-  const [err, setErr] = useState('');
-  const fileRef = useRef<HTMLInputElement>(null);
 
-  const pick = async (file?: File) => {
-    if (!file) return;
-    setErr('');
-    try {
-      setPhoto(await compressImage(file));
-    } catch (e) {
-      setErr((e as Error).message);
-    }
-  };
-
-  const post = async () => {
-    if (!text.trim() && !photo) return;
-    setBusy(true);
-    setErr('');
-    try {
-      let photoFileId = '';
-      if (photo) photoFileId = (await getBackend().uploadPhoto(photo, `${task.title}-${Date.now()}.jpg`)).fileId;
-      const now = new Date().toISOString();
-      const c: Comment = { id: uid('k'), taskId: task.id, authorId: settings.meId, body: text.trim(), photoFileId, createdAt: now, updatedAt: now, deleted: false };
-      save('comments', c);
-      setText('');
-      setPhoto('');
-    } catch (e) {
-      setErr('Photo upload failed: ' + (e as Error).message + '. Photos need a connection.');
-    } finally {
-      setBusy(false);
-    }
+  const post = () => {
+    const body = text.trim();
+    if (!body) return;
+    const now = new Date().toISOString();
+    const c: Comment = { id: uid('k'), taskId: task.id, authorId: settings.meId, body, photoFileId: '', createdAt: now, updatedAt: now, deleted: false };
+    save('comments', c);
+    setText('');
   };
 
   return (
@@ -371,11 +346,6 @@ function Comments({ task }: { task: Task }) {
                   <b>{author?.name ?? 'Someone'}</b> · {new Date(c.createdAt).toLocaleString(undefined, { month: 'short', day: 'numeric', hour: 'numeric', minute: '2-digit' })}
                 </div>
                 {c.body && <p>{c.body}</p>}
-                {c.photoFileId && (
-                  <a href={getBackend().photoUrl(c.photoFileId)} target="_blank" rel="noopener">
-                    <img src={getBackend().photoUrl(c.photoFileId)} alt="Attached photo" loading="lazy" />
-                  </a>
-                )}
               </div>
               {c.authorId === settings.meId && (
                 <button class="icon-btn" style={{ width: 32, height: 32 }} aria-label="Delete comment" onClick={() => remove('comments', c)}>
@@ -386,17 +356,9 @@ function Comments({ task }: { task: Task }) {
           );
         })}
         <div class="composer" style={comments.length ? {} : { borderTop: 0 }}>
-          <input ref={fileRef} type="file" accept="image/*" hidden onChange={(e) => pick(e.currentTarget.files?.[0])} />
-          <button class="icon-btn" aria-label="Attach photo" onClick={() => fileRef.current?.click()}><IconCamera /></button>
-          {photo && (
-            <div class="preview">
-              <img src={photo} alt="Photo to attach" />
-            </div>
-          )}
           <textarea rows={1} value={text} placeholder="Add a comment" onInput={(e) => setText(e.currentTarget.value)} aria-label="Comment" />
-          <button class="icon-btn" aria-label="Post comment" onClick={post} disabled={busy || (!text.trim() && !photo)}><IconSend /></button>
+          <button class="icon-btn" aria-label="Post comment" onClick={post} disabled={!text.trim()}><IconSend /></button>
         </div>
-        {err && <div class="error-text" style={{ padding: '0 16px 12px' }}>{err}</div>}
       </div>
     </>
   );

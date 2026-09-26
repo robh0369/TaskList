@@ -1,7 +1,7 @@
-import { beforeEach, describe, expect, it } from 'vitest';
+import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { DemoBackend } from '../src/api/mock';
 import { blankTask } from '../src/lib/defaults';
-import { __resetForTests, completeTask, getState, save, syncNow } from '../src/store/store';
+import { __resetForTests, completeTask, getState, save, syncNow, updateSettings } from '../src/store/store';
 
 beforeEach(() => {
   localStorage.clear();
@@ -62,5 +62,35 @@ describe('store + demo backend', () => {
     save('tasks', { ...t, title: 'v2' });
     await syncNow();
     expect(getState().data.tasks.find((x) => x.id === t.id)!.title).toBe('v2');
+  });
+});
+
+describe('store + Google Sheets backend', () => {
+  it('waits for a passcode, flags a wrong one, then syncs', async () => {
+    const calls: any[] = [];
+    vi.stubGlobal('fetch', async (_url: string, init: { body: string }) => {
+      const req = JSON.parse(init.body);
+      calls.push(req);
+      const body =
+        req.passcode !== 'right'
+          ? { ok: false, error: 'unauthorized' }
+          : { ok: true, rev: 3, changes: { members: [{ id: 'm1', name: 'Rob', color: '#000', updatedAt: 'x', deleted: false, _rev: 1 }] } };
+      return new Response(JSON.stringify(body), { status: 200 });
+    });
+    __resetForTests({ apiUrl: 'https://script.example/exec', passcode: '' });
+
+    await syncNow();
+    expect(calls).toHaveLength(0);
+
+    updateSettings({ passcode: 'wrong' });
+    await syncNow();
+    expect(getState().sync.status).toBe('auth');
+
+    updateSettings({ passcode: 'right' });
+    await syncNow();
+    expect(getState().sync.status).toBe('idle');
+    expect(getState().rev).toBe(3);
+    expect(getState().data.members[0].name).toBe('Rob');
+    vi.unstubAllGlobals();
   });
 });

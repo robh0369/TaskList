@@ -31,6 +31,39 @@ const TABS = [
   { name: 'reports', label: 'Reports', Icon: IconChart },
 ] as const;
 
+function PasscodeScreen({ rejected }: { rejected: boolean }) {
+  const [code, setCode] = useState('');
+  const submit = (e: Event) => {
+    e.preventDefault();
+    if (code.trim()) updateSettings({ passcode: code.trim() });
+  };
+  return (
+    <form class="onboard" onSubmit={submit}>
+      <div style={{ fontSize: 48 }} aria-hidden="true">🔑</div>
+      <h1>Household passcode</h1>
+      <p>Enter the passcode you set in the Google Sheet's script. You only need to do this once on each phone.</p>
+      <div class="card" style={{ marginTop: 20 }}>
+        <label class="field">
+          <span class="label">Passcode</span>
+          <input
+            type="password"
+            value={code}
+            onInput={(e) => setCode(e.currentTarget.value)}
+            autoFocus
+            autoComplete="current-password"
+            aria-label="Passcode"
+            data-testid="passcode"
+          />
+        </label>
+      </div>
+      {rejected && <p class="error-text">That passcode didn't match. Try again.</p>}
+      <button class="btn primary block" style={{ marginTop: 16 }} type="submit" disabled={!code.trim()}>
+        Connect
+      </button>
+    </form>
+  );
+}
+
 export function App() {
   const state = useStore();
   const { data, settings, sync } = state;
@@ -57,6 +90,35 @@ export function App() {
   const openTask = useCallback((task: Task) => setSheet({ task }), []);
   const members = activeMembers(data);
   const me = members.find((m) => m.id === settings.meId);
+
+  // Connected to the household Sheet: get the passcode once per device.
+  if (settings.apiUrl && (!settings.passcode || sync.status === 'auth')) {
+    return <PasscodeScreen rejected={!!settings.passcode && sync.status === 'auth'} />;
+  }
+
+  // First sync hasn't landed yet.
+  if (settings.apiUrl && state.rev === 0) {
+    const failed = sync.status === 'error' || sync.status === 'offline';
+    return (
+      <div class="onboard">
+        <div style={{ fontSize: 48 }} aria-hidden="true">🏡</div>
+        <h1>{failed ? "Couldn't connect" : 'Connecting…'}</h1>
+        <p>
+          {sync.status === 'offline'
+            ? 'No connection to your Google Sheet. Check your internet connection.'
+            : failed
+              ? sync.error
+              : 'Loading your household tasks from Google Sheets.'}
+        </p>
+        {failed && (
+          <div style={{ display: 'grid', gap: 10, marginTop: 20 }}>
+            <button class="btn primary" onClick={() => void syncNow()}>Try again</button>
+            <button class="btn" onClick={() => updateSettings({ passcode: '' })}>Re-enter passcode</button>
+          </div>
+        )}
+      </div>
+    );
+  }
 
   // First run on this device: ask who's using it.
   if (!settings.meId && members.length > 0) {

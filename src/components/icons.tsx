@@ -18,7 +18,6 @@ export const IconCheck = (p: P) => base(<path d="m5 12.5 4.5 4.5L19 7.5" stroke-
 export const IconRepeat = (p: P) => base(<><path d="M17 2l4 4-4 4" /><path d="M3 11V10a4 4 0 0 1 4-4h14M7 22l-4-4 4-4" /><path d="M21 13v1a4 4 0 0 1-4 4H3" /></>, p);
 export const IconClose = (p: P) => base(<path d="M6 6l12 12M18 6 6 18" />, p);
 export const IconBack = (p: P) => base(<path d="m15 18-6-6 6-6" />, p);
-export const IconCamera = (p: P) => base(<><path d="M4 8h3l2-3h6l2 3h3a1 1 0 0 1 1 1v10a1 1 0 0 1-1 1H4a1 1 0 0 1-1-1V9a1 1 0 0 1 1-1z" /><circle cx="12" cy="13.5" r="3.5" /></>, p);
 export const IconSend = (p: P) => base(<path d="M4 12 20 4l-6 16-3-7z" />, p);
 export const IconComment = (p: P) => base(<path d="M4 5h16v11H9l-5 4z" />, p);
 export const IconTrash = (p: P) => base(<><path d="M4 7h16M9 7V4h6v3M6 7l1 13h10l1-13" /></>, p);
