@@ -48,3 +48,5 @@ export const Logo = ({ size = 40 }: { size?: number }) => (
     </g>
   </svg>
 );
+export const IconPlay = (p: P) => base(<path d="M8 5.5v13l10.5-6.5z" fill="currentColor" />, p);
+export const IconChevron = (p: P) => base(<path d="m9 6 6 6-6 6" />, p);

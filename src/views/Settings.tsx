@@ -2,6 +2,7 @@ import { useState } from 'preact/hooks';
 import type { Category, Member } from '../api/types';
 import { DemoBackend } from '../api/mock';
 import { Avatar, Seg } from '../components/common';
+import { DemoVideoCard } from '../components/DemoVideo';
 import { IconClose, IconPlus } from '../components/icons';
 import { MEMBER_COLORS, uid } from '../lib/defaults';
 import { activeCategories, activeMembers } from '../store/selectors';
@@ -28,6 +29,11 @@ export function SettingsView() {
 
   return (
     <div class="content">
+      <section class="section">
+        <div class="section-h"><h2>Getting started</h2></div>
+        <DemoVideoCard />
+      </section>
+
       <section class="section">
         <div class="section-h"><h2>This device</h2></div>
         <div class="card">
