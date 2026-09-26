@@ -13,7 +13,7 @@ test.beforeEach(async ({ page }) => {
   await page.goto('./#/today');
 });
 
-test('first run → add, complete, recurring, project, reports', async ({ page }) => {
+test('first run → add, complete, recurring, comments, reports', async ({ page }) => {
   // Pick who this device belongs to.
   await expect(page.getByText("Who's this phone for?")).toBeVisible();
   await snap(page, '0-onboarding');
@@ -34,6 +34,7 @@ test('first run → add, complete, recurring, project, reports', async ({ page }
   const row = page.getByTestId('task-row').filter({ hasText: 'Water plants' });
   await expect(row).toContainText('Tomorrow');
   await expect(row).toContainText('Yard');
+  await expect(row).not.toContainText('🌿');
 
   // Completing a recurring task rolls it forward instead of removing it.
   await row.getByRole('button', { name: /Complete/ }).click();
@@ -56,21 +57,6 @@ test('first run → add, complete, recurring, project, reports', async ({ page }
   await snap(page, '3-task-sheet');
   await page.getByRole('button', { name: 'Close' }).click();
 
-  // Projects: create one and add a task.
-  await tab(page, 'Projects').click();
-  await expect(page.getByTestId('project-card')).toHaveCount(1);
-  await snap(page, '4-projects');
-  await page.getByTestId('new-project').click();
-  await page.getByTestId('project-name').fill('Garage cleanout');
-  await page.getByTestId('save-project').click();
-  await expect(page.getByRole('heading', { name: 'Garage cleanout' })).toBeVisible();
-  await page.getByTestId('add-project-task').click();
-  await page.getByTestId('task-title').fill('Sort donations');
-  await page.getByTestId('save-task').click();
-  await expect(page.getByTestId('task-row').filter({ hasText: 'Sort donations' })).toBeVisible();
-  await page.getByTestId('task-row').filter({ hasText: 'Sort donations' }).getByRole('button', { name: /Complete/ }).click();
-  await expect(page.getByText('1 of 1 done')).toBeVisible();
-
   // Reports render with data.
   await tab(page, 'Reports').click();
   await expect(page.getByText('Workload split')).toBeVisible();
@@ -83,14 +69,16 @@ test('first run → add, complete, recurring, project, reports', async ({ page }
 
   // Tasks view filters.
   await tab(page, 'Tasks').click();
-  await page.getByRole('group', { name: 'Category' }).getByRole('button', { name: /Car/ }).click();
-  await expect(page.getByTestId('task-row')).toHaveCount(1);
+  await expect(page.getByTestId('lane-high')).toBeVisible();
   await snap(page, '7-tasks');
+  await page.getByTestId('filter-category').selectOption({ label: 'Car' });
+  await expect(page.getByTestId('task-row')).toHaveCount(1);
 
   // Data survives a reload (local cache).
   await page.reload();
-  await tab(page, 'Projects').click();
-  await expect(page.getByTestId('project-card')).toHaveCount(2);
+  await tab(page, 'Today').click();
+  await page.getByRole('button', { name: 'Everyone' }).click();
+  await expect(page.getByTestId('task-row').filter({ hasText: 'Water plants' })).toBeVisible();
 
   // Settings + dark mode.
   await page.getByRole('button', { name: 'Settings' }).click();

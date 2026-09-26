@@ -18,10 +18,10 @@ describe('buildReport', () => {
     const r = buildReport(data([done({ completedBy: 'm1', effort: 4 }), done({ completedBy: 'both', effort: 2 })]), 7, NOW);
     const m1 = r.workload.find((l) => l.memberId === 'm1')!;
     const m2 = r.workload.find((l) => l.memberId === 'm2')!;
-    expect(m1).toMatchObject({ count: 1.5, effort: 5 });
-    expect(m2).toMatchObject({ count: 0.5, effort: 1 });
+    expect(m1).toMatchObject({ count: 1.5 });
+    expect(m2).toMatchObject({ count: 0.5 });
     expect(r.totalDone).toBe(2);
-    expect(r.totalEffort).toBe(6);
+    expect(r.openCount).toBe(1);
   });
 
   it('excludes completions outside the range and deleted ones', () => {

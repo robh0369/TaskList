@@ -1,4 +1,4 @@
-import type { Category, Collections, Member, Project, Task } from '../api/types';
+import type { Category, Collections, Member, Task } from '../api/types';
 import { addDays, today } from './dates';
 
 /**
@@ -6,8 +6,6 @@ import { addDays, today } from './dates';
  * (validated for color-vision deficiency). Color follows the person everywhere.
  */
 export const MEMBER_COLORS = ['#2a78d6', '#eb6834', '#1baf7a', '#e87ba4', '#4a3aa7', '#eda100'];
-
-export const PROJECT_COLORS = ['#2a78d6', '#1baf7a', '#eb6834', '#4a3aa7', '#e87ba4', '#eda100'];
 
 let counter = 0;
 export function uid(prefix = ''): string {
@@ -25,15 +23,15 @@ export function defaultMembers(): Member[] {
 }
 
 const CATS: [string, string][] = [
-  ['Kitchen', '🍳'],
-  ['Cleaning', '🧽'],
-  ['Laundry', '🧺'],
-  ['Yard', '🌿'],
-  ['Finances', '💵'],
-  ['Errands', '🛒'],
-  ['Home Repair', '🔧'],
-  ['Car', '🚗'],
-  ['Pets', '🐾'],
+  ['Kitchen', ''],
+  ['Cleaning', ''],
+  ['Laundry', ''],
+  ['Yard', ''],
+  ['Finances', ''],
+  ['Errands', ''],
+  ['Home Repair', ''],
+  ['Car', ''],
+  ['Pets', ''],
 ];
 
 export function defaultCategories(): Category[] {
@@ -72,23 +70,6 @@ export function blankTask(partial: Partial<Task> = {}): Task {
   };
 }
 
-export function blankProject(partial: Partial<Project> = {}): Project {
-  const now = new Date().toISOString();
-  return {
-    id: uid('p'),
-    name: '',
-    description: '',
-    ownerId: '',
-    targetDate: '',
-    color: PROJECT_COLORS[0],
-    status: 'active',
-    createdAt: now,
-    updatedAt: now,
-    deleted: false,
-    ...partial,
-  };
-}
-
 /** Sample data so demo mode has something to look at. */
 export function demoSeed(): Collections {
   const t = today();
@@ -96,16 +77,15 @@ export function demoSeed(): Collections {
   members[0].name = 'Alex';
   members[1].name = 'Sam';
   const cats = defaultCategories();
-  const project = blankProject({ id: 'p-demo', name: 'Repaint guest room', ownerId: 'm1', targetDate: addDays(t, 21), description: 'Walls + trim, eggshell finish.' });
   const tasks: Task[] = [
     blankTask({ title: 'Take out trash & recycling', assigneeId: 'm2', categoryId: 'c2', dueDate: t, effort: 1, recurrence: { freq: 'weekly', interval: 1, mode: 'fixed' } }),
     blankTask({ title: 'Pay electric bill', assigneeId: 'm1', categoryId: 'c5', dueDate: addDays(t, -2), priority: 'high', effort: 1 }),
     blankTask({ title: 'Mow the lawn', assigneeId: 'm1', categoryId: 'c4', dueDate: addDays(t, 2), effort: 3, recurrence: { freq: 'weekly', interval: 2, mode: 'afterCompletion' } }),
     blankTask({ title: 'Clean out fridge', assigneeId: 'both', categoryId: 'c1', dueDate: addDays(t, 4), effort: 2 }),
     blankTask({ title: 'Oil change', assigneeId: 'm2', categoryId: 'c8', dueDate: addDays(t, 10), effort: 2 }),
-    blankTask({ title: 'Buy paint & supplies', assigneeId: 'm2', categoryId: 'c6', projectId: project.id, dueDate: addDays(t, 3), effort: 2 }),
-    blankTask({ title: 'Patch & sand walls', assigneeId: 'm1', categoryId: 'c7', projectId: project.id, dueDate: addDays(t, 7), effort: 4 }),
-    blankTask({ title: 'Paint walls (2 coats)', assigneeId: 'both', categoryId: 'c7', projectId: project.id, dueDate: addDays(t, 14), effort: 5 }),
+    blankTask({ title: 'Buy paint & supplies', assigneeId: 'm2', categoryId: 'c6', dueDate: addDays(t, 3), effort: 2 }),
+    blankTask({ title: 'Patch & sand walls', assigneeId: 'm1', categoryId: 'c7', dueDate: addDays(t, 7), effort: 4 }),
+    blankTask({ title: 'Paint walls (2 coats)', assigneeId: 'both', categoryId: 'c7', dueDate: addDays(t, 14), effort: 5 }),
     blankTask({ title: 'Wash sheets & towels', assigneeId: 'm2', categoryId: 'c3', dueDate: addDays(t, 1), effort: 2, recurrence: { freq: 'weekly', interval: 1, byWeekday: [6], mode: 'fixed' } }),
   ];
   // A few weeks of history so reports aren't empty.
@@ -135,5 +115,5 @@ export function demoSeed(): Collections {
       deleted: false,
     });
   }
-  return { tasks, completions, projects: [project], comments: [], members, categories: cats };
+  return { tasks, completions, projects: [], comments: [], members, categories: cats };
 }

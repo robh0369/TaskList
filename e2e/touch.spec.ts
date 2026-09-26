@@ -9,12 +9,12 @@ test('touch-drag a task to another priority lane', async ({ page }) => {
   await page.goto('./#/settings');
   await page.getByTestId('import-starter-settings').click();
   await page.goto('./#/tasks');
-  await page.getByRole('group', { name: 'Category' }).getByRole('button', { name: /Hire out/ }).click();
+  await page.getByTestId('filter-category').selectOption({ label: 'Hire out' });
 
   const handle = page.getByTestId('lane-low').getByTestId('task-row').filter({ hasText: 'Patch woodpecker holes' }).getByTestId('drag-handle');
-  await handle.scrollIntoViewIfNeeded();
+  await handle.evaluate((el) => el.scrollIntoView({ block: 'center' }));
   const hb = (await handle.boundingBox())!;
-  const tb = (await page.getByTestId('lane-med').locator('.lane-card').boundingBox())!;
+  const tb = (await page.getByTestId('lane-med').boundingBox())!;
   const cdp = await page.context().newCDPSession(page);
   const x = hb.x + hb.width / 2;
   const touch = (type: string, y: number) =>

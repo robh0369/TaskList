@@ -1,13 +1,13 @@
 # Home Tasks
 
-A shared chore and project list for a two-person household. It installs on your phones like an app, and it's free to host on GitHub Pages. You can keep the data in a Google Sheet that you own.
+A shared household task list for a two-person household. It installs on your phones like an app, and it's free to host on GitHub Pages. You can keep the data in a Google Sheet that you own.
 
 - **Today view:** what's overdue, what's due today and the next 7 days, with a Mine / Everyone toggle
 - **Quick add:** type `Mow lawn sat @Sam #Yard every 2 weeks !high` and the date, person, category, repeat rule and priority fill themselves in
 - **Recurring chores:** daily, weekly (on chosen weekdays), or monthly, either *on schedule* or *counted from when it was done*
-- **Projects:** group bigger jobs into tasks, with a progress ring and a target date. Tasks can also have their own checklist of subtasks.
+- **Priorities:** a ranked High / Medium / Low list. Drag a task past a divider to change its priority. Tasks can also have their own checklist of subtasks.
 - **Comments** on any task, for example "bought the filter, it's in the garage"
-- **Reports:** the workload split between you (by task count or by effort points), completions per week, on-time rate, a breakdown by category, and lists of overdue and stale tasks
+- **Reports:** the workload split between you (by tasks completed), completions per week, on-time rate, a breakdown by category, and lists of overdue and stale tasks
 - **Works offline:** changes queue up on the phone and sync when you're back online, and light and dark mode follow the phone's setting
 
 ---
@@ -30,7 +30,7 @@ This takes about 5 minutes, and one person does it once.
 2. In the Sheet, open **Extensions → Apps Script**.
 3. Delete the starter code, paste in everything from [`apps-script/Code.gs`](apps-script/Code.gs) (or the [raw version](https://raw.githubusercontent.com/robh0369/TaskList/main/apps-script/Code.gs), which is easier to copy), and click **Save**.
 4. Set a household passcode. Click **Project Settings** (the ⚙️ icon on the left), then under **Script properties** click **Add script property**. Enter **Property** `PASSCODE` and **Value** your passcode (something neither of you will mind typing once per phone), then **Save**.
-5. Back in the **Editor**, choose `setup` in the function dropdown and click **Run**. Google will ask you to authorize the script. Click through **Advanced → Go to (project) (unsafe)**; it says "unsafe" only because this is your own unpublished script. This step creates the tabs (Tasks, Completions, Projects, Comments, Members, Categories). The script only needs access to this Sheet, not your Drive.
+5. Back in the **Editor**, choose `setup` in the function dropdown and click **Run**. Google will ask you to authorize the script. Click through **Advanced → Go to (project) (unsafe)**; it says "unsafe" only because this is your own unpublished script. This step creates the tabs (Tasks, Completions, Projects, Comments, Members, Categories; the Projects tab is no longer used but kept for compatibility). The script only needs access to this Sheet, not your Drive.
 6. Click **Deploy → New deployment**. Click the gear icon, choose **Web app**, and set:
    - **Execute as:** Me
    - **Who has access:** Anyone
@@ -73,7 +73,7 @@ src/
   api/        Backend interface, Google Sheets client, and the in-browser demo backend
   store/      App state, optimistic writes + outbox, background sync
   lib/        Recurrence rules, quick-add parser, reports, date helpers
-  views/      Today, Tasks, Projects, Reports, Settings
+  views/      Today, Tasks, Reports, Settings
   components/ Task row, task sheet, charts, shared UI
 apps-script/  Code.gs: the Google Apps Script backend
 ```

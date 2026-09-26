@@ -18,7 +18,6 @@ export function useRowContext(data: Collections, onOpen: (t: Task) => void): Row
     return {
       members: activeMembers(data),
       categories: byId(data.categories),
-      projects: byId(data.projects),
       commentCounts,
       subtaskCounts,
       onOpen,

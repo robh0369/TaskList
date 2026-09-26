@@ -60,8 +60,6 @@ export const STARTER_TASKS: Row[] = [
   ['Clean all bathrooms, showers & drains', BEC, HIRE_CATEGORY_ID, 'high'],
 ];
 
-const EFFORT: Record<Priority, number> = { high: 3, med: 2, low: 2 };
-
 export function starterId(i: number): string {
   return 'starter-' + String(i + 1).padStart(2, '0');
 }
@@ -78,13 +76,13 @@ export function planStarterImport(data: Collections, meId = ''): StarterPlan {
   const tasks = STARTER_TASKS.flatMap(([title, assigneeId, categoryId, priority], i) =>
     have.has(starterId(i))
       ? []
-      : [blankTask({ id: starterId(i), title, assigneeId, categoryId, priority, effort: EFFORT[priority], createdBy: meId })],
+      : [blankTask({ id: starterId(i), title, assigneeId, categoryId, priority, createdBy: meId })],
   );
 
   const categories: Category[] = [];
   if (!data.categories.some((c) => c.id === HIRE_CATEGORY_ID)) {
     const order = Math.max(0, ...data.categories.map((c) => c.sortOrder)) + 1;
-    categories.push({ id: HIRE_CATEGORY_ID, name: 'Hire out', icon: '🧰', sortOrder: order, updatedAt: '', deleted: false });
+    categories.push({ id: HIRE_CATEGORY_ID, name: 'Hire out', icon: '', sortOrder: order, updatedAt: '', deleted: false });
   }
 
   // Only rename the placeholder names; never overwrite names you've set.

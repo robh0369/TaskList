@@ -6,7 +6,6 @@ export type Range = 7 | 30 | 90;
 export interface MemberLoad {
   memberId: string;
   count: number;
-  effort: number;
 }
 
 export interface WeekPoint {
@@ -20,12 +19,12 @@ export interface WeekPoint {
 export interface CategoryLoad {
   categoryId: string;
   count: number;
-  effort: number;
 }
 
 export interface ReportData {
   totalDone: number;
-  totalEffort: number;
+  /** Open (not done) top-level tasks right now. */
+  openCount: number;
   onTimeRate: number | null;
   workload: MemberLoad[];
   weekly: WeekPoint[];
@@ -52,15 +51,13 @@ export function buildReport(data: Collections, range: Range, now = today()): Rep
   const done = data.completions.filter((c) => !c.deleted && inRange(c, from, now));
   const members = data.members.filter((m) => !m.deleted);
 
-  const loads = new Map<string, MemberLoad>(members.map((m) => [m.id, { memberId: m.id, count: 0, effort: 0 }]));
+  const loads = new Map<string, MemberLoad>(members.map((m) => [m.id, { memberId: m.id, count: 0 }]));
   for (const c of done) {
     const ids = c.completedBy === 'both' ? members.map((m) => m.id) : [c.completedBy];
     const share = 1 / Math.max(1, ids.length);
     for (const id of ids) {
-      if (!loads.has(id)) loads.set(id, { memberId: id, count: 0, effort: 0 });
-      const l = loads.get(id)!;
-      l.count += share;
-      l.effort += (c.effort || 1) * share;
+      if (!loads.has(id)) loads.set(id, { memberId: id, count: 0 });
+      loads.get(id)!.count += share;
     }
   }
 
@@ -88,10 +85,8 @@ export function buildReport(data: Collections, range: Range, now = today()): Rep
   const cats = new Map<string, CategoryLoad>();
   for (const c of done) {
     const key = c.categoryId || '';
-    if (!cats.has(key)) cats.set(key, { categoryId: key, count: 0, effort: 0 });
-    const l = cats.get(key)!;
-    l.count++;
-    l.effort += c.effort || 1;
+    if (!cats.has(key)) cats.set(key, { categoryId: key, count: 0 });
+    cats.get(key)!.count++;
   }
 
   const withDue = done.filter((c) => c.dueDate);
@@ -103,7 +98,7 @@ export function buildReport(data: Collections, range: Range, now = today()): Rep
 
   return {
     totalDone: done.length,
-    totalEffort: done.reduce((s, c) => s + (c.effort || 1), 0),
+    openCount: open.filter((t) => !t.parentId).length,
     onTimeRate: withDue.length ? onTime / withDue.length : null,
     workload: [...loads.values()],
     weekly,

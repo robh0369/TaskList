@@ -1,10 +1,11 @@
 import { useState } from 'preact/hooks';
 import type { Task } from '../api/types';
-import { Avatar, Empty, Seg } from '../components/common';
-import { PriorityBoard } from '../components/PriorityBoard';
+import { Empty, Seg } from '../components/common';
+import { IconRepeat, IconSearch } from '../components/icons';
+import { RankedList } from '../components/RankedList';
 import { TaskRow } from '../components/TaskRow';
 import { useRowContext } from '../components/useRowContext';
-import { activeCategories, activeMembers, activeProjects, liveTasks, sortTasks } from '../store/selectors';
+import { activeCategories, activeMembers, liveTasks, sortTasks } from '../store/selectors';
 import { useStore } from '../store/store';
 
 type Status = 'open' | 'done' | 'all';
@@ -34,13 +35,11 @@ export function TasksView({ onOpen }: { onOpen: (t: Task) => void }) {
   const [q, setQ] = useState('');
   const [who, setWho] = useState('');
   const [cat, setCat] = useState('');
-  const [proj, setProj] = useState('');
   const [status, setStatus] = useState<Status>('open');
   const [repeating, setRepeating] = useState(false);
 
   const members = activeMembers(data);
   const categories = activeCategories(data);
-  const projects = activeProjects(data);
 
   const needle = q.trim().toLowerCase();
   const tasks = liveTasks(data)
@@ -48,70 +47,61 @@ export function TasksView({ onOpen }: { onOpen: (t: Task) => void }) {
     .filter((t) => (mode === 'priority' ? t.status === 'open' : status === 'all' || t.status === status))
     .filter((t) => !who || t.assigneeId === who || (who !== 'none' && t.assigneeId === 'both') || (who === 'none' && !t.assigneeId))
     .filter((t) => !cat || t.categoryId === cat)
-    .filter((t) => !proj || t.projectId === proj)
     .filter((t) => !repeating || !!t.recurrence)
     .filter((t) => !needle || t.title.toLowerCase().includes(needle) || t.notes.toLowerCase().includes(needle))
-    .sort(status === 'done' ? (a, b) => b.completedAt.localeCompare(a.completedAt) : sortTasks);
+    .sort(status === 'done' && mode === 'list' ? (a, b) => b.completedAt.localeCompare(a.completedAt) : sortTasks);
 
-  const toggle = (cur: string, v: string, set: (v: string) => void) => set(cur === v ? '' : v);
+  const filtered = !!(needle || who || cat || repeating);
 
   return (
     <div class="content">
-      <Seg label="View" value={mode} onChange={setMode} options={[['priority', 'By priority'], ['list', 'List']]} />
-      <div style={{ height: 10 }} />
-      <input class="search" type="search" placeholder="Search tasks" value={q} onInput={(e) => setQ(e.currentTarget.value)} aria-label="Search tasks" />
+      <Seg label="View" value={mode} onChange={setMode} options={[['priority', 'Priority'], ['list', 'List']]} />
 
-      <div class="chips" style={{ marginTop: 10 }} role="group" aria-label="Status">
-        {mode === 'list' &&
-          (['open', 'done', 'all'] as Status[]).map((s) => (
-            <button key={s} class="chip" aria-pressed={status === s} onClick={() => setStatus(s)}>
-              {s === 'open' ? 'To do' : s === 'done' ? 'Done' : 'All'}
-            </button>
-          ))}
-        <button class="chip" aria-pressed={repeating} onClick={() => setRepeating(!repeating)}>↻ Recurring</button>
-      </div>
-      <div class="chips" role="group" aria-label="Assignee">
-        {members.map((m) => (
-          <button key={m.id} class="chip" aria-pressed={who === m.id} onClick={() => toggle(who, m.id, setWho)}>
-            <Avatar member={m} size="sm" /> {m.name}
+      <div class="filters">
+        <label class="search-wrap">
+          <IconSearch />
+          <input class="search" type="search" placeholder="Search" value={q} onInput={(e) => setQ(e.currentTarget.value)} aria-label="Search tasks" />
+        </label>
+        <div class="filter-row">
+          <select class={`pill ${who ? 'on' : ''}`} value={who} onChange={(e) => setWho(e.currentTarget.value)} aria-label="Assignee" data-testid="filter-who">
+            <option value="">Everyone</option>
+            {members.map((m) => <option key={m.id} value={m.id}>{m.name}</option>)}
+            <option value="none">Unassigned</option>
+          </select>
+          <select class={`pill ${cat ? 'on' : ''}`} value={cat} onChange={(e) => setCat(e.currentTarget.value)} aria-label="Category" data-testid="filter-category">
+            <option value="">All categories</option>
+            {categories.map((c) => <option key={c.id} value={c.id}>{c.name}</option>)}
+          </select>
+          {mode === 'list' && (
+            <select class={`pill ${status !== 'open' ? 'on' : ''}`} value={status} onChange={(e) => setStatus(e.currentTarget.value as Status)} aria-label="Status">
+              <option value="open">To do</option>
+              <option value="done">Done</option>
+              <option value="all">All</option>
+            </select>
+          )}
+          <button class={`pill ${repeating ? 'on' : ''}`} aria-pressed={repeating} onClick={() => setRepeating(!repeating)}>
+            <IconRepeat /> Recurring
           </button>
-        ))}
-        <button class="chip" aria-pressed={who === 'none'} onClick={() => toggle(who, 'none', setWho)}>Unassigned</button>
-      </div>
-      <div class="chips" role="group" aria-label="Category">
-        {categories.map((c) => (
-          <button key={c.id} class="chip" aria-pressed={cat === c.id} onClick={() => toggle(cat, c.id, setCat)}>
-            {c.icon} {c.name}
-          </button>
-        ))}
-      </div>
-      {projects.length > 0 && (
-        <div class="chips" role="group" aria-label="Project">
-          {projects.map((p) => (
-            <button key={p.id} class="chip" aria-pressed={proj === p.id} onClick={() => toggle(proj, p.id, setProj)}>
-              <i class="dot" style={{ background: p.color }} /> {p.name}
-            </button>
-          ))}
         </div>
-      )}
+      </div>
 
       {mode === 'priority' ? (
-        tasks.length || needle || who || cat || proj || repeating ? (
-          <PriorityBoard tasks={tasks} ctx={ctx} />
+        tasks.length || filtered ? (
+          <RankedList tasks={tasks} ctx={ctx} />
         ) : (
-          <Empty icon="🗂️" title="No open tasks">Tap + to add one.</Empty>
+          <Empty title="No open tasks">Tap + to add one.</Empty>
         )
       ) : (
-      <section class="section">
-        <div class="section-h">
-          <h2>{tasks.length} {tasks.length === 1 ? 'task' : 'tasks'}</h2>
-        </div>
-        {tasks.length ? (
-          <div class="card">{tasks.map((t) => <TaskRow key={t.id} task={t} ctx={ctx} />)}</div>
-        ) : (
-          <Empty icon="🔍" title="No matching tasks">Try clearing a filter.</Empty>
-        )}
-      </section>
+        <section class="section">
+          <div class="section-h">
+            <h2>{tasks.length} {tasks.length === 1 ? 'task' : 'tasks'}</h2>
+          </div>
+          {tasks.length ? (
+            <div class="card">{tasks.map((t) => <TaskRow key={t.id} task={t} ctx={ctx} />)}</div>
+          ) : (
+            <Empty title="No matching tasks">Try clearing a filter.</Empty>
+          )}
+        </section>
       )}
     </div>
   );

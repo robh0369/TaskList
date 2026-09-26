@@ -1,22 +1,20 @@
 import { useCallback, useEffect, useState } from 'preact/hooks';
 import type { Task } from './api/types';
 import { Avatar, ToastHost } from './components/common';
-import { IconBack, IconChart, IconFolder, IconGear, IconList, IconPlus, IconToday } from './components/icons';
+import { IconBack, IconChart, IconGear, IconList, IconLock, IconPlus, IconToday, Logo } from './components/icons';
 import { TaskSheet } from './components/TaskSheet';
 import { activeMembers } from './store/selectors';
 import { startSync, syncNow, updateSettings, useStore } from './store/store';
-import { ProjectDetail, ProjectsView } from './views/Projects';
 import { ReportsView } from './views/Reports';
 import { SettingsView } from './views/Settings';
 import { TasksView } from './views/Tasks';
 import { TodayView } from './views/Today';
 
-type Route = { name: 'today' | 'tasks' | 'projects' | 'reports' | 'settings' } | { name: 'project'; id: string };
+type Route = { name: 'today' | 'tasks' | 'reports' | 'settings' };
 
 function parseHash(): Route {
-  const [, a, b] = location.hash.replace(/^#/, '').split('/');
-  if (a === 'projects' && b) return { name: 'project', id: decodeURIComponent(b) };
-  if (a === 'tasks' || a === 'projects' || a === 'reports' || a === 'settings') return { name: a };
+  const [, a] = location.hash.replace(/^#/, '').split('/');
+  if (a === 'tasks' || a === 'reports' || a === 'settings') return { name: a };
   return { name: 'today' };
 }
 
@@ -27,7 +25,6 @@ function go(path: string) {
 const TABS = [
   { name: 'today', label: 'Today', Icon: IconToday },
   { name: 'tasks', label: 'Tasks', Icon: IconList },
-  { name: 'projects', label: 'Projects', Icon: IconFolder },
   { name: 'reports', label: 'Reports', Icon: IconChart },
 ] as const;
 
@@ -39,7 +36,7 @@ function PasscodeScreen({ rejected }: { rejected: boolean }) {
   };
   return (
     <form class="onboard" onSubmit={submit}>
-      <div style={{ fontSize: 48 }} aria-hidden="true">🔑</div>
+      <div class="onboard-mark"><IconLock /></div>
       <h1>Household passcode</h1>
       <p>Enter the passcode you set in the Google Sheet's script. You only need to do this once on each phone.</p>
       <div class="card" style={{ marginTop: 20 }}>
@@ -101,7 +98,7 @@ export function App() {
     const failed = sync.status === 'error' || sync.status === 'offline';
     return (
       <div class="onboard">
-        <div style={{ fontSize: 48 }} aria-hidden="true">🏡</div>
+        <Logo size={48} />
         <h1>{failed ? "Couldn't connect" : 'Connecting…'}</h1>
         <p>
           {sync.status === 'offline'
@@ -124,7 +121,7 @@ export function App() {
   if (!settings.meId && members.length > 0) {
     return (
       <div class="onboard">
-        <div style={{ fontSize: 48 }} aria-hidden="true">🏡</div>
+        <Logo size={48} />
         <h1>Who's this phone for?</h1>
         <p>Your tasks show up first on the Today screen, and anything you complete gets credited to you. You can change this later in Settings.</p>
         <div class="who-pick">
@@ -140,20 +137,18 @@ export function App() {
   }
 
   const title =
-    route.name === 'project'
-      ? data.projects.find((p) => p.id === route.id)?.name ?? 'Project'
-      : { today: 'Today', tasks: 'All tasks', projects: 'Projects', reports: 'Reports', settings: 'Settings' }[route.name];
+    { today: 'Today', tasks: 'Tasks', reports: 'Reports', settings: 'Settings' }[route.name];
   const subtitle =
     route.name === 'today'
       ? new Date().toLocaleDateString(undefined, { weekday: 'long', month: 'long', day: 'numeric' })
       : '';
-  const tabActive = route.name === 'project' ? 'projects' : route.name;
+  const tabActive = route.name;
 
   return (
     <div class="app">
       <header class="topbar">
-        {(route.name === 'project' || route.name === 'settings') && (
-          <button class="icon-btn" aria-label="Back" onClick={() => history.length > 1 ? history.back() : go(route.name === 'project' ? 'projects' : 'today')} style={{ marginLeft: -10 }}>
+        {route.name === 'settings' && (
+          <button class="icon-btn" aria-label="Back" onClick={() => (history.length > 1 ? history.back() : go('today'))} style={{ marginLeft: -10 }}>
             <IconBack />
           </button>
         )}
@@ -191,10 +186,6 @@ export function App() {
       <main>
         {route.name === 'today' && <TodayView onOpen={openTask} />}
         {route.name === 'tasks' && <TasksView onOpen={openTask} />}
-        {route.name === 'projects' && <ProjectsView onOpenProject={(id) => go('projects/' + encodeURIComponent(id))} />}
-        {route.name === 'project' && (
-          <ProjectDetail id={route.id} onOpen={openTask} onAdd={(defaults) => setSheet({ defaults })} onBack={() => go('projects')} />
-        )}
         {route.name === 'reports' && <ReportsView onOpen={openTask} />}
         {route.name === 'settings' && <SettingsView />}
       </main>
@@ -204,7 +195,7 @@ export function App() {
           class="fab"
           aria-label="New task"
           data-testid="fab"
-          onClick={() => setSheet({ defaults: route.name === 'project' ? { projectId: route.id } : undefined })}
+          onClick={() => setSheet({})}
         >
           <IconPlus />
         </button>
