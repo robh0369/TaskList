@@ -24,9 +24,11 @@ The app opens in **demo mode** with sample data that's saved on that one device 
 
 This takes about 5 minutes, and one person does it once.
 
+> **On a phone?** The Google Sheets phone app has no **Extensions** menu or Apps Script editor. Do this setup once on a computer. On a phone, you can instead open **sheets.google.com in Chrome** and turn on **⋮ → Desktop site**; the full menu bar, including **Extensions**, then appears. To copy the script on a phone, open the [raw Code.gs](https://raw.githubusercontent.com/robh0369/TaskList/main/apps-script/Code.gs) and use Select all → Copy.
+
 1. Create a new, blank Google Sheet (for example "Home Tasks").
 2. In the Sheet, open **Extensions → Apps Script**.
-3. Delete the starter code, paste in everything from [`apps-script/Code.gs`](apps-script/Code.gs), and click **Save**.
+3. Delete the starter code, paste in everything from [`apps-script/Code.gs`](apps-script/Code.gs) (or the [raw version](https://raw.githubusercontent.com/robh0369/TaskList/main/apps-script/Code.gs), which is easier to copy), and click **Save**.
 4. Set a household passcode. Click **Project Settings** (the ⚙️ icon on the left), then under **Script properties** click **Add script property**. Enter **Property** `PASSCODE` and **Value** your passcode (something neither of you will mind typing once per phone), then **Save**.
 5. Back in the **Editor**, choose `setup` in the function dropdown and click **Run**. Google will ask you to authorize the script. Click through **Advanced → Go to (project) (unsafe)**; it says "unsafe" only because this is your own unpublished script. This step creates the tabs (Tasks, Completions, Projects, Comments, Members, Categories) and a Drive folder for photos.
 6. Click **Deploy → New deployment**. Click the gear icon, choose **Web app**, and set:
