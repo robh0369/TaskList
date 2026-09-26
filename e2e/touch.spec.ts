@@ -9,6 +9,7 @@ test('touch-drag a task to another priority lane', async ({ page }) => {
   await page.goto('./#/settings');
   await page.getByTestId('import-starter-settings').click();
   await page.goto('./#/tasks');
+  await page.getByRole('button', { name: 'Everyone' }).click();
   await page.getByTestId('filter-category').selectOption({ label: 'Hire out' });
 
   const handle = page.getByTestId('lane-low').getByTestId('task-row').filter({ hasText: 'Patch woodpecker holes' }).getByTestId('drag-handle');

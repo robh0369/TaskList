@@ -1,107 +1,64 @@
-import { useState } from 'preact/hooks';
+import { useMemo, useState } from 'preact/hooks';
 import type { Task } from '../api/types';
 import { Empty, Seg } from '../components/common';
-import { IconRepeat, IconSearch } from '../components/icons';
+import { IconSearch } from '../components/icons';
 import { RankedList } from '../components/RankedList';
-import { TaskRow } from '../components/TaskRow';
 import { useRowContext } from '../components/useRowContext';
-import { activeCategories, activeMembers, liveTasks, sortTasks } from '../store/selectors';
-import { useStore } from '../store/store';
+import { planStarterImport, STARTER_TASKS } from '../lib/starter';
+import { activeCategories, isMine, liveTasks, sortTasks } from '../store/selectors';
+import { importStarter, showToast, useStore } from '../store/store';
 
-type Status = 'open' | 'done' | 'all';
-type Mode = 'priority' | 'list';
+type Scope = 'mine' | 'all';
 
-const MODE_KEY = 'tasklist.tasksMode';
-function readMode(): Mode {
-  try {
-    return localStorage.getItem(MODE_KEY) === 'list' ? 'list' : 'priority';
-  } catch {
-    return 'priority';
-  }
-}
-
+/** Home screen: the running list, ranked High → Medium → Low. */
 export function TasksView({ onOpen }: { onOpen: (t: Task) => void }) {
-  const { data } = useStore();
+  const { data, settings } = useStore();
   const ctx = useRowContext(data, onOpen);
-  const [mode, setModeState] = useState<Mode>(readMode);
-  const setMode = (m: Mode) => {
-    setModeState(m);
-    try {
-      localStorage.setItem(MODE_KEY, m);
-    } catch {
-      /* per-device preference only */
-    }
-  };
+  const [scope, setScope] = useState<Scope>(settings.meId ? 'mine' : 'all');
   const [q, setQ] = useState('');
-  const [who, setWho] = useState('');
   const [cat, setCat] = useState('');
-  const [status, setStatus] = useState<Status>('open');
-  const [repeating, setRepeating] = useState(false);
-
-  const members = activeMembers(data);
   const categories = activeCategories(data);
+  const starterLeft = useMemo(() => planStarterImport(data).tasks.length, [data.tasks]);
 
   const needle = q.trim().toLowerCase();
   const tasks = liveTasks(data)
-    .filter((t) => !t.parentId)
-    .filter((t) => (mode === 'priority' ? t.status === 'open' : status === 'all' || t.status === status))
-    .filter((t) => !who || t.assigneeId === who || (who !== 'none' && t.assigneeId === 'both') || (who === 'none' && !t.assigneeId))
+    .filter((t) => !t.parentId && t.status === 'open')
+    .filter((t) => scope === 'all' || isMine(t, settings.meId))
     .filter((t) => !cat || t.categoryId === cat)
-    .filter((t) => !repeating || !!t.recurrence)
     .filter((t) => !needle || t.title.toLowerCase().includes(needle) || t.notes.toLowerCase().includes(needle))
-    .sort(status === 'done' && mode === 'list' ? (a, b) => b.completedAt.localeCompare(a.completedAt) : sortTasks);
-
-  const filtered = !!(needle || who || cat || repeating);
+    .sort(sortTasks);
+  const filtered = !!(needle || cat);
 
   return (
     <div class="content">
-      <Seg label="View" value={mode} onChange={setMode} options={[['priority', 'Priority'], ['list', 'List']]} />
+      {settings.apiUrl && starterLeft === STARTER_TASKS.length && (
+        <div class="banner" style={{ margin: '0 0 12px' }}>
+          <span>Load Rob &amp; Rebecca's starting list ({STARTER_TASKS.length} tasks)?</span>
+          <button class="btn primary" data-testid="import-starter" onClick={() => showToast(`Added ${importStarter()} tasks`)}>
+            Load
+          </button>
+        </div>
+      )}
+
+      {settings.meId && <Seg label="Show" value={scope} onChange={setScope} options={[['mine', 'Mine'], ['all', 'Everyone']]} />}
 
       <div class="filters">
-        <label class="search-wrap">
-          <IconSearch />
-          <input class="search" type="search" placeholder="Search" value={q} onInput={(e) => setQ(e.currentTarget.value)} aria-label="Search tasks" />
-        </label>
-        <div class="filter-row">
-          <select class={`pill ${who ? 'on' : ''}`} value={who} onChange={(e) => setWho(e.currentTarget.value)} aria-label="Assignee" data-testid="filter-who">
-            <option value="">Everyone</option>
-            {members.map((m) => <option key={m.id} value={m.id}>{m.name}</option>)}
-            <option value="none">Unassigned</option>
-          </select>
+        <div class="filter-bar">
+          <label class="search-wrap">
+            <IconSearch />
+            <input class="search" type="search" placeholder="Search" value={q} onInput={(e) => setQ(e.currentTarget.value)} aria-label="Search tasks" />
+          </label>
           <select class={`pill ${cat ? 'on' : ''}`} value={cat} onChange={(e) => setCat(e.currentTarget.value)} aria-label="Category" data-testid="filter-category">
             <option value="">All categories</option>
             {categories.map((c) => <option key={c.id} value={c.id}>{c.name}</option>)}
           </select>
-          {mode === 'list' && (
-            <select class={`pill ${status !== 'open' ? 'on' : ''}`} value={status} onChange={(e) => setStatus(e.currentTarget.value as Status)} aria-label="Status">
-              <option value="open">To do</option>
-              <option value="done">Done</option>
-              <option value="all">All</option>
-            </select>
-          )}
-          <button class={`pill ${repeating ? 'on' : ''}`} aria-pressed={repeating} onClick={() => setRepeating(!repeating)}>
-            <IconRepeat /> Recurring
-          </button>
         </div>
       </div>
 
-      {mode === 'priority' ? (
-        tasks.length || filtered ? (
-          <RankedList tasks={tasks} ctx={ctx} />
-        ) : (
-          <Empty title="No open tasks">Tap + to add one.</Empty>
-        )
+      {tasks.length || filtered ? (
+        <RankedList tasks={tasks} ctx={ctx} />
       ) : (
-        <section class="section">
-          <div class="section-h">
-            <h2>{tasks.length} {tasks.length === 1 ? 'task' : 'tasks'}</h2>
-          </div>
-          {tasks.length ? (
-            <div class="card">{tasks.map((t) => <TaskRow key={t.id} task={t} ctx={ctx} />)}</div>
-          ) : (
-            <Empty title="No matching tasks">Try clearing a filter.</Empty>
-          )}
-        </section>
+        <Empty title={scope === 'mine' ? 'Nothing on your list' : 'Nothing on the list'}>Tap + to add something.</Empty>
       )}
     </div>
   );

@@ -1,9 +1,7 @@
 import { useMemo, useState } from 'preact/hooks';
-import type { Comment, Recurrence, Task } from '../api/types';
-import { addDays, parseISODate, today, weekdayName } from '../lib/dates';
+import type { Comment, Task } from '../api/types';
 import { blankTask, uid } from '../lib/defaults';
 import { parseQuickAdd } from '../lib/quickadd';
-import { describeRecurrence } from '../lib/recurrence';
 import { activeCategories, activeMembers, sortTasks } from '../store/selectors';
 import { completeTask, remove, reopenTask, save, showToast, useStore } from '../store/store';
 import { Avatar, Seg, Sheet } from './common';
@@ -15,8 +13,6 @@ export interface TaskSheetProps {
   defaults?: Partial<Task>;
   onClose: () => void;
 }
-
-type RepeatKind = 'none' | 'daily' | 'weekly' | 'monthly';
 
 export function TaskSheet({ task, defaults, onClose }: TaskSheetProps) {
   const { data, settings } = useStore();
@@ -33,15 +29,13 @@ export function TaskSheet({ task, defaults, onClose }: TaskSheetProps) {
   const onTitle = (value: string) => {
     setRawTitle(value);
     if (!isNew) return set({ title: value });
-    // Quick-add shorthand: "Mow lawn fri @Sam #Yard every 2 weeks"
+    // Quick-add shorthand: "Fix gutter @Rob #Home !high"
     const p = parseQuickAdd(value, members, categories);
     set({
       title: p.title,
-      ...(p.dueDate && { dueDate: p.dueDate }),
       ...(p.assigneeId && { assigneeId: p.assigneeId }),
       ...(p.categoryId && { categoryId: p.categoryId }),
-      ...(p.priority !== 'med' && { priority: p.priority }),
-      ...(p.recurrence && { recurrence: p.recurrence }),
+      ...(p.priority && { priority: p.priority }),
     });
   };
 
@@ -65,23 +59,6 @@ export function TaskSheet({ task, defaults, onClose }: TaskSheetProps) {
     onClose();
   };
 
-  const repeatKind: RepeatKind = draft.recurrence?.freq ?? 'none';
-  const setRepeat = (kind: RepeatKind) => {
-    if (kind === 'none') return set({ recurrence: null });
-    const r: Recurrence = { freq: kind, interval: draft.recurrence?.interval ?? 1, mode: draft.recurrence?.mode ?? 'fixed' };
-    if (kind === 'weekly' && draft.dueDate) r.byWeekday = [parseISODate(draft.dueDate).getDay()];
-    if (kind === 'monthly' && draft.dueDate) r.byMonthDay = parseISODate(draft.dueDate).getDate();
-    set({ recurrence: r, dueDate: draft.dueDate || today() });
-  };
-  const setRule = (patch: Partial<Recurrence>) => draft.recurrence && set({ recurrence: { ...draft.recurrence, ...patch } });
-
-  const t0 = today();
-  const quickDates: [string, string][] = [
-    [t0, 'Today'],
-    [addDays(t0, 1), 'Tomorrow'],
-    [addDays(t0, 7), 'Next week'],
-  ];
-
   return (
     <Sheet
       title={isNew ? 'New task' : 'Task'}
@@ -97,7 +74,7 @@ export function TaskSheet({ task, defaults, onClose }: TaskSheetProps) {
           <textarea
             class="title-input"
             rows={1}
-            placeholder={isNew ? 'e.g. Mow lawn sat @Sam #Yard every 2 weeks' : 'Title'}
+            placeholder={isNew ? 'What needs doing?' : 'Title'}
             value={rawTitle}
             onInput={(e) => onTitle(e.currentTarget.value.replace(/\n/g, ' '))}
             onKeyDown={(e) => {
@@ -110,7 +87,11 @@ export function TaskSheet({ task, defaults, onClose }: TaskSheetProps) {
             aria-label="Title"
             data-testid="task-title"
           />
-          {isNew && rawTitle !== draft.title && draft.title && <div class="hint">Will save as “{draft.title}”</div>}
+          {isNew && rawTitle !== draft.title && draft.title ? (
+            <div class="hint">Will save as “{draft.title}”</div>
+          ) : (
+            isNew && <div class="hint">Tip: add @name, #category or !high</div>
+          )}
         </div>
         <label class="field">
           <span class="label">Notes</span>
@@ -124,7 +105,7 @@ export function TaskSheet({ task, defaults, onClose }: TaskSheetProps) {
             <button class="btn block" onClick={() => { reopenTask(task); onClose(); }}>Mark not done</button>
           ) : (
             <button class="btn primary block" onClick={() => { completeTask(task); onClose(); }} data-testid="complete-in-sheet">
-              <IconCheck /> {task.recurrence ? 'Done for this time' : 'Mark done'}
+              <IconCheck /> Mark done
             </button>
           )}
         </div>
@@ -139,31 +120,6 @@ export function TaskSheet({ task, defaults, onClose }: TaskSheetProps) {
         ))}
         <button class="chip" aria-pressed={draft.assigneeId === 'both'} onClick={() => set({ assigneeId: 'both' })}>Both</button>
         <button class="chip" aria-pressed={draft.assigneeId === ''} onClick={() => set({ assigneeId: '' })}>Anyone</button>
-      </div>
-
-      <div class="section-h" style={{ marginTop: 14 }}><h2>When</h2></div>
-      <div class="card">
-        <div class="field">
-          <div class="chips" style={{ padding: 0, margin: '0 0 8px', flexWrap: 'wrap' }}>
-            {quickDates.map(([d, label]) => (
-              <button key={label} class="chip" aria-pressed={draft.dueDate === d} onClick={() => set({ dueDate: d })}>{label}</button>
-            ))}
-            <button class="chip" aria-pressed={!draft.dueDate} onClick={() => set({ dueDate: '', recurrence: null })}>No date</button>
-          </div>
-          <input type="date" value={draft.dueDate} onInput={(e) => set({ dueDate: e.currentTarget.value })} aria-label="Due date" />
-        </div>
-        <div class="field">
-          <span class="label">Repeat</span>
-          <Seg
-            label="Repeat"
-            value={repeatKind}
-            onChange={setRepeat}
-            options={[['none', 'Never'], ['daily', 'Daily'], ['weekly', 'Weekly'], ['monthly', 'Monthly']]}
-          />
-          {draft.recurrence && (
-            <RepeatDetails rule={draft.recurrence} onChange={setRule} />
-          )}
-        </div>
       </div>
 
       <div class="section-h" style={{ marginTop: 14 }}><h2>Details</h2></div>
@@ -195,59 +151,6 @@ export function TaskSheet({ task, defaults, onClose }: TaskSheetProps) {
         </button>
       )}
     </Sheet>
-  );
-}
-
-function RepeatDetails({ rule, onChange }: { rule: Recurrence; onChange: (p: Partial<Recurrence>) => void }) {
-  const unit = rule.freq === 'daily' ? 'day' : rule.freq === 'weekly' ? 'week' : 'month';
-  return (
-    <div style={{ marginTop: 10 }}>
-      <label style={{ display: 'flex', alignItems: 'center', gap: 8, fontSize: 15 }}>
-        Every
-        <input
-          type="number"
-          min={1}
-          max={99}
-          value={rule.interval}
-          onInput={(e) => onChange({ interval: Math.max(1, Number(e.currentTarget.value) || 1) })}
-          style={{ width: 56, background: 'var(--surface-2)', borderRadius: 8, textAlign: 'center', padding: '4px' }}
-          aria-label="Interval"
-        />
-        {unit}{rule.interval > 1 ? 's' : ''}
-      </label>
-      {rule.freq === 'weekly' && (
-        <div class="weekday-pick" role="group" aria-label="Days of week">
-          {[0, 1, 2, 3, 4, 5, 6].map((d) => {
-            const on = rule.byWeekday?.includes(d) ?? false;
-            return (
-              <button
-                key={d}
-                aria-pressed={on}
-                aria-label={weekdayName(d)}
-                onClick={() => {
-                  const cur = rule.byWeekday ?? [];
-                  onChange({ byWeekday: on ? cur.filter((x) => x !== d) : [...cur, d].sort() });
-                }}
-              >
-                {weekdayName(d)[0]}
-              </button>
-            );
-          })}
-        </div>
-      )}
-      <div style={{ marginTop: 10 }}>
-        <Seg
-          label="Repeat from"
-          value={rule.mode}
-          onChange={(mode) => onChange({ mode })}
-          options={[['fixed', 'On schedule'], ['afterCompletion', 'After done']]}
-        />
-      </div>
-      <div class="hint">
-        {describeRecurrence(rule)}.{' '}
-        {rule.mode === 'fixed' ? 'Keeps its calendar rhythm even if done late.' : 'Next one is counted from the day it gets done.'}
-      </div>
-    </div>
   );
 }
 

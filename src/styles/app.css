@@ -146,6 +146,9 @@ button { cursor: pointer; }
 .chip[aria-pressed='true'] { background: var(--text); color: var(--bg); border-color: var(--text); }
 
 .filters { margin-top: 12px; display: grid; gap: 8px; }
+.filter-bar { display: flex; gap: 8px; }
+.filter-bar .search-wrap { flex: 1; min-width: 0; }
+.filter-bar .pill { height: 38px; max-width: 46%; }
 .search-wrap { position: relative; display: block; }
 .search-wrap svg { position: absolute; left: 11px; top: 50%; transform: translateY(-50%); width: 16px; height: 16px; color: var(--text-3); pointer-events: none; }
 .search {
@@ -253,6 +256,9 @@ select.pill {
 .stat .value { font-size: 24px; font-weight: 650; letter-spacing: -0.02em; margin-top: 2px; font-variant-numeric: tabular-nums; }
 .chart-card h3 { font-size: 15px; margin: 0; font-weight: 600; }
 .chart-card .sub { font-size: 13px; color: var(--text-3); margin: 2px 0 14px; }
+.legend { display: flex; flex-wrap: wrap; gap: 4px 14px; font-size: 12px; color: var(--text-2); margin-bottom: 8px; }
+.legend span { display: inline-flex; align-items: center; gap: 6px; }
+.legend i { width: 10px; height: 10px; border-radius: 3px; display: inline-block; }
 .chart svg { display: block; width: 100%; height: auto; overflow: visible; }
 .chart .axis text { font-size: 11px; fill: var(--text-3); font-variant-numeric: tabular-nums; }
 .chart .grid line { stroke: var(--chart-grid); stroke-width: 1; }

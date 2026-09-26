@@ -10,10 +10,10 @@ export interface MemberLoad {
 
 export interface WeekPoint {
   weekStart: string;
+  /** Tasks completed that week. */
   count: number;
-  onTime: number;
-  /** Completions that had a due date — the denominator for on-time rate. */
-  withDue: number;
+  /** Tasks added that week. */
+  added: number;
 }
 
 export interface CategoryLoad {
@@ -23,14 +23,14 @@ export interface CategoryLoad {
 
 export interface ReportData {
   totalDone: number;
+  /** Tasks added in the range. */
+  totalAdded: number;
   /** Open (not done) top-level tasks right now. */
   openCount: number;
-  onTimeRate: number | null;
   workload: MemberLoad[];
   weekly: WeekPoint[];
   categories: CategoryLoad[];
-  overdue: Task[];
-  dueThisWeek: Task[];
+  /** Open tasks nobody has touched for two weeks or more, oldest first. */
   stale: Task[];
 }
 
@@ -38,17 +38,16 @@ export function isOpen(t: Task): boolean {
   return !t.deleted && t.status === 'open';
 }
 
-function inRange(c: Completion, from: string, to: string): boolean {
-  const d = stampToDate(c.completedAt);
+function inRange(stamp: string, from: string, to: string): boolean {
+  const d = stampToDate(stamp);
   return d >= from && d <= to;
 }
 
-/**
- * "Both" completions split credit evenly so the workload view stays fair.
- */
+/** "Both" completions split credit evenly so the workload view stays fair. */
 export function buildReport(data: Collections, range: Range, now = today()): ReportData {
   const from = addDays(now, -(range - 1));
-  const done = data.completions.filter((c) => !c.deleted && inRange(c, from, now));
+  const done = data.completions.filter((c: Completion) => !c.deleted && inRange(c.completedAt, from, now));
+  const tasks = data.tasks.filter((t) => !t.deleted && !t.parentId);
   const members = data.members.filter((m) => !m.deleted);
 
   const loads = new Map<string, MemberLoad>(members.map((m) => [m.id, { memberId: m.id, count: 0 }]));
@@ -65,21 +64,19 @@ export function buildReport(data: Collections, range: Range, now = today()): Rep
   const weeksBack = Math.max(6, Math.ceil(range / 7));
   const firstWeek = addDays(startOfWeek(now), -7 * (weeksBack - 1));
   const weekly: WeekPoint[] = [];
-  for (let i = 0; i < weeksBack; i++) {
-    weekly.push({ weekStart: addDays(firstWeek, 7 * i), count: 0, onTime: 0, withDue: 0 });
-  }
+  for (let i = 0; i < weeksBack; i++) weekly.push({ weekStart: addDays(firstWeek, 7 * i), count: 0, added: 0 });
+  const bucket = (stamp: string): WeekPoint | undefined => {
+    const d = stampToDate(stamp);
+    if (d < firstWeek || d > now) return undefined;
+    return weekly[Math.floor(daysBetween(firstWeek, d) / 7)];
+  };
   for (const c of data.completions) {
-    if (c.deleted) continue;
-    const d = stampToDate(c.completedAt);
-    if (d < firstWeek || d > now) continue;
-    const idx = Math.floor(daysBetween(firstWeek, d) / 7);
-    const w = weekly[idx];
-    if (!w) continue;
-    w.count++;
-    if (c.dueDate) {
-      w.withDue++;
-      if (d <= c.dueDate) w.onTime++;
-    }
+    const w = !c.deleted && bucket(c.completedAt);
+    if (w) w.count++;
+  }
+  for (const t of tasks) {
+    const w = t.createdAt && bucket(t.createdAt);
+    if (w) w.added++;
   }
 
   const cats = new Map<string, CategoryLoad>();
@@ -89,24 +86,16 @@ export function buildReport(data: Collections, range: Range, now = today()): Rep
     cats.get(key)!.count++;
   }
 
-  const withDue = done.filter((c) => c.dueDate);
-  const onTime = withDue.filter((c) => stampToDate(c.completedAt) <= c.dueDate).length;
-
-  const open = data.tasks.filter(isOpen);
-  const weekEnd = addDays(now, 7);
-  const byDue = (a: Task, b: Task) => a.dueDate.localeCompare(b.dueDate);
-
+  const open = tasks.filter(isOpen);
   return {
     totalDone: done.length,
-    openCount: open.filter((t) => !t.parentId).length,
-    onTimeRate: withDue.length ? onTime / withDue.length : null,
+    totalAdded: tasks.filter((t) => t.createdAt && inRange(t.createdAt, from, now)).length,
+    openCount: open.length,
     workload: [...loads.values()],
     weekly,
     categories: [...cats.values()].sort((a, b) => b.count - a.count),
-    overdue: open.filter((t) => t.dueDate && t.dueDate < now).sort(byDue),
-    dueThisWeek: open.filter((t) => t.dueDate && t.dueDate >= now && t.dueDate <= weekEnd).sort(byDue),
     stale: open
-      .filter((t) => !t.recurrence && daysBetween(stampToDate(t.updatedAt), now) >= 14)
+      .filter((t) => daysBetween(stampToDate(t.updatedAt), now) >= 14)
       .sort((a, b) => a.updatedAt.localeCompare(b.updatedAt)),
   };
 }

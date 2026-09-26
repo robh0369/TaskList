@@ -18,6 +18,7 @@ test('load starting list, then drag a task between priority lanes', async ({ pag
   // Board groups by priority; filter to the Hire out category.
   await tab(page, 'Tasks').click();
   await expect(page.getByTestId('lane-high')).toBeVisible();
+  await page.getByRole('button', { name: 'Everyone' }).click();
   await page.getByTestId('filter-category').selectOption({ label: 'Hire out' });
   await expect(page.getByTestId('lane-high').getByTestId('task-row')).toHaveCount(3);
   await expect(page.getByTestId('lane-low').getByTestId('task-row')).toHaveCount(3);
@@ -51,9 +52,10 @@ test('load starting list, then drag a task between priority lanes', async ({ pag
   await page.keyboard.press('ArrowDown');
   await expect(page.getByTestId('lane-med').getByTestId('task-row').filter({ hasText: 'Mop floors' })).toBeVisible();
 
-  // Undated high-priority tasks show on Today.
-  await tab(page, 'Today').click();
+  // The new priority sticks after switching tabs.
+  await tab(page, 'Done').click();
+  await tab(page, 'Tasks').click();
   await page.getByRole('button', { name: 'Everyone' }).click();
-  await expect(page.getByText('High priority · no date')).toBeVisible();
-  if (shots) await page.screenshot({ path: `${shots}p3-today.png` });
+  await page.getByTestId('filter-category').selectOption({ label: 'Hire out' });
+  await expect(page.getByTestId('lane-high').getByTestId('task-row').filter({ hasText: 'Fix flashing' })).toBeVisible();
 });

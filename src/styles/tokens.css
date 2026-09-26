@@ -29,6 +29,7 @@
 
   /* Charts (reference data-viz palette, light steps) */
   --chart-grid: #ececea;
+  --chart-muted: #b3b6c0;
   --seq: #2a78d6;
 
   --radius: 12px;
@@ -67,6 +68,7 @@
     --p-med: #f0b43c;
     --p-low: #767885;
     --chart-grid: #26262b;
+    --chart-muted: #5b5e6a;
     --seq: #3987e5;
   }
 }
@@ -98,5 +100,6 @@
   --p-med: #f0b43c;
   --p-low: #767885;
   --chart-grid: #26262b;
+  --chart-muted: #5b5e6a;
   --seq: #3987e5;
 }

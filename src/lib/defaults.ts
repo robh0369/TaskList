@@ -78,15 +78,15 @@ export function demoSeed(): Collections {
   members[1].name = 'Sam';
   const cats = defaultCategories();
   const tasks: Task[] = [
-    blankTask({ title: 'Take out trash & recycling', assigneeId: 'm2', categoryId: 'c2', dueDate: t, effort: 1, recurrence: { freq: 'weekly', interval: 1, mode: 'fixed' } }),
-    blankTask({ title: 'Pay electric bill', assigneeId: 'm1', categoryId: 'c5', dueDate: addDays(t, -2), priority: 'high', effort: 1 }),
-    blankTask({ title: 'Mow the lawn', assigneeId: 'm1', categoryId: 'c4', dueDate: addDays(t, 2), effort: 3, recurrence: { freq: 'weekly', interval: 2, mode: 'afterCompletion' } }),
-    blankTask({ title: 'Clean out fridge', assigneeId: 'both', categoryId: 'c1', dueDate: addDays(t, 4), effort: 2 }),
-    blankTask({ title: 'Oil change', assigneeId: 'm2', categoryId: 'c8', dueDate: addDays(t, 10), effort: 2 }),
-    blankTask({ title: 'Buy paint & supplies', assigneeId: 'm2', categoryId: 'c6', dueDate: addDays(t, 3), effort: 2 }),
-    blankTask({ title: 'Patch & sand walls', assigneeId: 'm1', categoryId: 'c7', dueDate: addDays(t, 7), effort: 4 }),
-    blankTask({ title: 'Paint walls (2 coats)', assigneeId: 'both', categoryId: 'c7', dueDate: addDays(t, 14), effort: 5 }),
-    blankTask({ title: 'Wash sheets & towels', assigneeId: 'm2', categoryId: 'c3', dueDate: addDays(t, 1), effort: 2, recurrence: { freq: 'weekly', interval: 1, byWeekday: [6], mode: 'fixed' } }),
+    blankTask({ title: 'Replace furnace filter', assigneeId: 'm2', categoryId: 'c2', effort: 1 }),
+    blankTask({ title: 'Pay electric bill', assigneeId: 'm1', categoryId: 'c5', priority: 'high', effort: 1 }),
+    blankTask({ title: 'Mow the lawn', assigneeId: 'm1', categoryId: 'c4', priority: 'high' }),
+    blankTask({ title: 'Clean out fridge', assigneeId: 'both', categoryId: 'c1', effort: 2 }),
+    blankTask({ title: 'Oil change', assigneeId: 'm2', categoryId: 'c8', priority: 'low' }),
+    blankTask({ title: 'Buy paint & supplies', assigneeId: 'm2', categoryId: 'c6', effort: 2 }),
+    blankTask({ title: 'Patch & sand walls', assigneeId: 'm1', categoryId: 'c7', effort: 4 }),
+    blankTask({ title: 'Paint walls (2 coats)', assigneeId: 'both', categoryId: 'c7', effort: 5 }),
+    blankTask({ title: 'Organize garage shelves', assigneeId: 'm2', categoryId: 'c2', priority: 'low' }),
   ];
   // A few weeks of history so reports aren't empty.
   const completions = [];
@@ -108,7 +108,7 @@ export function demoSeed(): Collections {
       title,
       completedBy: who,
       completedAt: new Date(day + 'T18:00:00').toISOString(),
-      dueDate: i % 4 === 0 ? addDays(day, -1) : day,
+      dueDate: '',
       effort,
       categoryId: cat,
       updatedAt: new Date().toISOString(),

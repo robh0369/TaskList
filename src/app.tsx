@@ -1,21 +1,21 @@
 import { useCallback, useEffect, useState } from 'preact/hooks';
 import type { Task } from './api/types';
 import { Avatar, ToastHost } from './components/common';
-import { IconBack, IconChart, IconGear, IconList, IconLock, IconPlus, IconToday, Logo } from './components/icons';
+import { IconBack, IconChart, IconCheckCircle, IconGear, IconList, IconLock, IconPlus, Logo } from './components/icons';
 import { TaskSheet } from './components/TaskSheet';
 import { activeMembers } from './store/selectors';
 import { startSync, syncNow, updateSettings, useStore } from './store/store';
 import { ReportsView } from './views/Reports';
 import { SettingsView } from './views/Settings';
 import { TasksView } from './views/Tasks';
-import { TodayView } from './views/Today';
+import { DoneView } from './views/Done';
 
-type Route = { name: 'today' | 'tasks' | 'reports' | 'settings' };
+type Route = { name: 'tasks' | 'done' | 'reports' | 'settings' };
 
 function parseHash(): Route {
   const [, a] = location.hash.replace(/^#/, '').split('/');
-  if (a === 'tasks' || a === 'reports' || a === 'settings') return { name: a };
-  return { name: 'today' };
+  if (a === 'done' || a === 'reports' || a === 'settings') return { name: a };
+  return { name: 'tasks' };
 }
 
 function go(path: string) {
@@ -23,8 +23,8 @@ function go(path: string) {
 }
 
 const TABS = [
-  { name: 'today', label: 'Today', Icon: IconToday },
   { name: 'tasks', label: 'Tasks', Icon: IconList },
+  { name: 'done', label: 'Done', Icon: IconCheckCircle },
   { name: 'reports', label: 'Reports', Icon: IconChart },
 ] as const;
 
@@ -137,9 +137,9 @@ export function App() {
   }
 
   const title =
-    { today: 'Today', tasks: 'Tasks', reports: 'Reports', settings: 'Settings' }[route.name];
+    { tasks: 'Tasks', done: 'Done', reports: 'Reports', settings: 'Settings' }[route.name];
   const subtitle =
-    route.name === 'today'
+    route.name === 'tasks'
       ? new Date().toLocaleDateString(undefined, { weekday: 'long', month: 'long', day: 'numeric' })
       : '';
   const tabActive = route.name;
@@ -148,7 +148,7 @@ export function App() {
     <div class="app">
       <header class="topbar">
         {route.name === 'settings' && (
-          <button class="icon-btn" aria-label="Back" onClick={() => (history.length > 1 ? history.back() : go('today'))} style={{ marginLeft: -10 }}>
+          <button class="icon-btn" aria-label="Back" onClick={() => (history.length > 1 ? history.back() : go('tasks'))} style={{ marginLeft: -10 }}>
             <IconBack />
           </button>
         )}
@@ -174,7 +174,7 @@ export function App() {
           </div>
         </div>
       )}
-      {!settings.apiUrl && route.name === 'today' && (
+      {!settings.apiUrl && route.name === 'tasks' && (
         <div class="content" style={{ paddingBottom: 0 }}>
           <div class="banner">
             <span>Demo mode. Tasks are saved on this device only.</span>
@@ -184,8 +184,8 @@ export function App() {
       )}
 
       <main>
-        {route.name === 'today' && <TodayView onOpen={openTask} />}
         {route.name === 'tasks' && <TasksView onOpen={openTask} />}
+        {route.name === 'done' && <DoneView onOpen={openTask} />}
         {route.name === 'reports' && <ReportsView onOpen={openTask} />}
         {route.name === 'settings' && <SettingsView />}
       </main>

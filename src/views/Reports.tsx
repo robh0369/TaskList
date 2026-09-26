@@ -1,7 +1,7 @@
 import { Fragment } from 'preact';
 import { useMemo, useState } from 'preact/hooks';
 import type { Task } from '../api/types';
-import { Empty, Seg } from '../components/common';
+import { Seg } from '../components/common';
 import { WeeklyColumns } from '../components/charts/WeeklyColumns';
 import { TaskRow } from '../components/TaskRow';
 import { useRowContext } from '../components/useRowContext';
@@ -38,8 +38,8 @@ export function ReportsView({ onOpen }: { onOpen: (t: Task) => void }) {
           <div class="value" data-testid="stat-done">{r.totalDone}</div>
         </div>
         <div class="stat">
-          <div class="label">On time</div>
-          <div class="value">{r.onTimeRate === null ? '–' : Math.round(r.onTimeRate * 100) + '%'}</div>
+          <div class="label">Added</div>
+          <div class="value">{r.totalAdded}</div>
         </div>
         <div class="stat">
           <div class="label">Open</div>
@@ -84,22 +84,19 @@ export function ReportsView({ onOpen }: { onOpen: (t: Task) => void }) {
 
       <section class="section">
         <div class="card card-pad chart-card">
-          <h3>Completed per week</h3>
-          <div class="sub">
-            Tap a column for details.
-            {r.onTimeRate !== null && ` ${Math.round(r.onTimeRate * 100)}% of tasks with a due date were done on time (${rangeLabel}).`}
-          </div>
+          <h3>Added vs done per week</h3>
+          <div class="sub">When done keeps up with added, the list isn't growing. Tap a week for details.</div>
           <WeeklyColumns weeks={r.weekly} />
           <button class="btn ghost table-toggle" onClick={() => setTables(!tables)}>{tables ? 'Hide table' : 'Show as table'}</button>
           {tables && (
             <table class="data-table">
-              <thead><tr><th>Week of</th><th>Done</th><th>On time</th></tr></thead>
+              <thead><tr><th>Week of</th><th>Added</th><th>Done</th></tr></thead>
               <tbody>
                 {r.weekly.map((w) => (
                   <tr key={w.weekStart}>
                     <td>{shortDate(w.weekStart)}</td>
+                    <td>{w.added}</td>
                     <td>{w.count}</td>
-                    <td>{w.withDue ? `${w.onTime}/${w.withDue}` : '–'}</td>
                   </tr>
                 ))}
               </tbody>
@@ -133,23 +130,9 @@ export function ReportsView({ onOpen }: { onOpen: (t: Task) => void }) {
         </div>
       </section>
 
-      <section class="section">
-        <div class="section-h"><h2 class="danger">Overdue</h2><span class="count">{r.overdue.length}</span></div>
-        {r.overdue.length ? (
-          <div class="card">{r.overdue.map((t) => <TaskRow key={t.id} task={t} ctx={ctx} />)}</div>
-        ) : (
-          <div class="card"><Empty title="Nothing overdue" /></div>
-        )}
-      </section>
-      {r.dueThisWeek.length > 0 && (
-        <section class="section">
-          <div class="section-h"><h2>Due in the next 7 days</h2><span class="count">{r.dueThisWeek.length}</span></div>
-          <div class="card">{r.dueThisWeek.map((t) => <TaskRow key={t.id} task={t} ctx={ctx} />)}</div>
-        </section>
-      )}
       {r.stale.length > 0 && (
         <section class="section">
-          <div class="section-h"><h2>Untouched for 2+ weeks</h2><span class="count">{r.stale.length}</span></div>
+          <div class="section-h"><h2>Waiting 2+ weeks</h2><span class="count">{r.stale.length}</span></div>
           <div class="card">{r.stale.map((t) => <TaskRow key={t.id} task={t} ctx={ctx} />)}</div>
         </section>
       )}

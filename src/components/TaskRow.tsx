@@ -1,11 +1,8 @@
 import type { ComponentChildren } from 'preact';
 import type { Category, Member, Task } from '../api/types';
-import { relativeLabel } from '../lib/dates';
-import { describeRecurrence } from '../lib/recurrence';
-import { dueClass } from '../store/selectors';
 import { completeTask, reopenTask } from '../store/store';
 import { AssigneeAvatar } from './common';
-import { IconCheck, IconComment, IconRepeat, IconSub } from './icons';
+import { IconCheck, IconComment, IconSub } from './icons';
 
 export interface RowContext {
   members: Member[];
@@ -40,15 +37,6 @@ export function TaskRow({ task, ctx, hidePriority, trailing, class: extra }: Tas
   const meta = [
     !hidePriority && !done && task.priority === 'high' && (
       <span key="p" class="meta-high">High</span>
-    ),
-    task.dueDate && !done && (
-      <span key="d" class={dueClass(task.dueDate)}>{relativeLabel(task.dueDate)}</span>
-    ),
-    task.recurrence && (
-      <span key="r" title={describeRecurrence(task.recurrence)}>
-        <IconRepeat />
-        <span class="sr-only">{describeRecurrence(task.recurrence)}</span>
-      </span>
     ),
     cat && <span key="c">{cat.name}</span>,
     subs && subs.total > 0 && (
