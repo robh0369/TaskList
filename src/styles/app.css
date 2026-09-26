@@ -32,12 +32,10 @@ button { cursor: pointer; }
 .topbar .sub { font-size: 13px; color: var(--text-3); font-weight: 500; display: block; letter-spacing: 0; margin-bottom: 2px; }
 .content { padding: 4px 16px 24px; }
 
-.sync-dot { display: inline-flex; align-items: center; background: none; border: 0; padding: 10px; }
-.sync-dot i { width: 7px; height: 7px; border-radius: 50%; background: var(--good); display: inline-block; opacity: 0.8; }
-.sync-dot[data-s='syncing'] i { background: var(--accent); animation: pulse 1s infinite; }
-.sync-dot[data-s='offline'] i { background: var(--text-3); }
-.sync-dot[data-s='error'] i, .sync-dot[data-s='auth'] i { background: var(--danger); }
-@keyframes pulse { 50% { opacity: 0.25; } }
+.sync-issue {
+  border: 1px solid var(--line); background: var(--surface); color: var(--text-2);
+  font-size: 12px; font-weight: 500; border-radius: 999px; padding: 4px 10px; min-height: 28px;
+}
 
 .tabbar {
   position: fixed; bottom: 0; left: 0; right: 0; z-index: 20;
@@ -354,3 +352,22 @@ select.pill {
 @media (prefers-reduced-motion: reduce) {
   *, *::before, *::after { animation-duration: 0.01ms !important; transition-duration: 0.01ms !important; }
 }
+
+/* Trash drop zone, shown only while dragging a task */
+.trash-zone {
+  position: fixed; z-index: 55; left: 0; right: 0; bottom: 0;
+  padding-bottom: var(--safe-bottom);
+  display: flex; align-items: center; justify-content: center; gap: 10px;
+  background: color-mix(in srgb, var(--surface) 94%, transparent);
+  backdrop-filter: blur(16px); -webkit-backdrop-filter: blur(16px);
+  border-top: 1px solid var(--line);
+  color: var(--text-2); font-size: 14px; font-weight: 500;
+  animation: trash-in 0.18s ease-out;
+  transition: background 0.15s, color 0.15s;
+}
+.trash-zone svg { width: 22px; height: 22px; }
+.trash-zone.is-over { background: var(--danger); color: #fff; border-top-color: var(--danger); }
+.trash-zone.is-over svg { transform: scale(1.12); }
+@keyframes trash-in { from { transform: translateY(100%); } }
+.drag-ghost.to-trash { opacity: 0.75; box-shadow: 0 0 0 2px var(--danger), var(--shadow-lg); }
+.app:has(.is-dragging) .fab { display: none; }

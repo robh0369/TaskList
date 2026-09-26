@@ -3,7 +3,7 @@ import type { Comment, Task } from '../api/types';
 import { blankTask, uid } from '../lib/defaults';
 import { parseQuickAdd } from '../lib/quickadd';
 import { activeCategories, activeMembers, sortTasks } from '../store/selectors';
-import { completeTask, remove, reopenTask, save, showToast, useStore } from '../store/store';
+import { completeTask, deleteTask, remove, reopenTask, save, showToast, useStore } from '../store/store';
 import { Avatar, Seg, Sheet } from './common';
 import { IconCheck, IconClose, IconPlus, IconSend, IconTrash } from './icons';
 
@@ -49,13 +49,7 @@ export function TaskSheet({ task, defaults, onClose }: TaskSheetProps) {
 
   const del = () => {
     if (!task) return;
-    const subs = data.tasks.filter((t) => t.parentId === task.id && !t.deleted);
-    remove('tasks', task);
-    subs.forEach((s) => remove('tasks', s));
-    showToast('Task deleted', () => {
-      save('tasks', task);
-      subs.forEach((s) => save('tasks', s));
-    });
+    deleteTask(task);
     onClose();
   };
 

@@ -58,4 +58,23 @@ test('load starting list, then drag a task between priority lanes', async ({ pag
   await page.getByRole('button', { name: 'Everyone' }).click();
   await page.getByTestId('filter-category').selectOption({ label: 'Hire out' });
   await expect(page.getByTestId('lane-high').getByTestId('task-row').filter({ hasText: 'Fix flashing' })).toBeVisible();
+
+  // Drag onto the trash zone to delete, then undo.
+  const victim = page.getByTestId('lane-low').getByTestId('task-row').filter({ hasText: 'Front door wood repair' });
+  const vh = victim.getByTestId('drag-handle');
+  await vh.evaluate((el) => el.scrollIntoView({ block: 'center' }));
+  const vb = (await vh.boundingBox())!;
+  await page.mouse.move(vb.x + vb.width / 2, vb.y + vb.height / 2);
+  await page.mouse.down();
+  await expect(page.getByTestId('trash-zone')).toBeVisible();
+  const vp = page.viewportSize()!;
+  await page.mouse.move(vp.width / 2, vp.height - 40, { steps: 12 });
+  await expect(page.getByTestId('trash-zone')).toHaveClass(/is-over/);
+  if (shots) await page.screenshot({ path: `${shots}p4-trash.png` });
+  await page.mouse.up();
+  await expect(page.getByRole('status')).toContainText('Task deleted');
+  await expect(page.getByTestId('trash-zone')).toHaveCount(0);
+  await expect(page.getByTestId('task-row').filter({ hasText: 'Front door wood repair' })).toHaveCount(0);
+  await page.getByRole('button', { name: 'Undo' }).click();
+  await expect(page.getByTestId('task-row').filter({ hasText: 'Front door wood repair' })).toBeVisible();
 });

@@ -32,11 +32,19 @@ export const IconCloud = (p: P) => base(<path d="M7 18h10.5a4 4 0 0 0 .6-7.96A6 
 export const IconUser = (p: P) => base(<><circle cx="12" cy="8" r="4" /><path d="M4 21a8 8 0 0 1 16 0" /></>, p);
 export const IconDownload = (p: P) => base(<><path d="M12 4v11M7 10l5 5 5-5" /><path d="M5 20h14" /></>, p);
 
-/** App mark: a house with a check, drawn as lines. */
+/** App mark: a checklist, matching the home-screen icon. */
 export const Logo = ({ size = 40 }: { size?: number }) => (
-  <svg width={size} height={size} viewBox="0 0 40 40" aria-hidden="true">
-    <rect width="40" height="40" rx="10" fill="var(--accent)" />
-    <path d="M11 19.5 20 12l9 7.5V28a1.5 1.5 0 0 1-1.5 1.5h-15A1.5 1.5 0 0 1 11 28z" fill="none" stroke="var(--accent-ink)" stroke-width="2" stroke-linejoin="round" />
-    <path d="m16.5 22.5 2.5 2.5 4.5-5" fill="none" stroke="var(--accent-ink)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" />
+  <svg width={size} height={size} viewBox="0 0 512 512" aria-hidden="true">
+    <rect width="512" height="512" rx="112" fill="var(--accent)" />
+    <g fill="none" stroke="var(--accent-ink)" stroke-linecap="round" stroke-linejoin="round">
+      <rect x="108" y="130" width="60" height="60" rx="16" stroke-width="18" />
+      <path d="m122 161 13 13 22-26" stroke-width="18" />
+      <path d="M214 160h186" stroke-width="26" />
+      <rect x="108" y="226" width="60" height="60" rx="16" stroke-width="18" />
+      <path d="m122 257 13 13 22-26" stroke-width="18" />
+      <path d="M214 256h186" stroke-width="26" />
+      <rect x="108" y="322" width="60" height="60" rx="16" stroke-width="18" opacity="0.7" />
+      <path d="M214 352h126" stroke-width="26" opacity="0.7" />
+    </g>
   </svg>
 );

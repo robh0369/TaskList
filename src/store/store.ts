@@ -205,6 +205,17 @@ export function completeTask(task: Task, by = state.settings.meId || task.assign
   return undo;
 }
 
+/** Deletes a task and its subtasks, with an Undo toast. */
+export function deleteTask(task: Task) {
+  const subs = state.data.tasks.filter((t) => t.parentId === task.id && !t.deleted);
+  remove('tasks', task);
+  subs.forEach((s) => remove('tasks', s));
+  showToast('Task deleted', () => {
+    save('tasks', task);
+    subs.forEach((s) => save('tasks', s));
+  });
+}
+
 /** Adds the household's starting list. Safe to run more than once. Returns tasks added. */
 export function importStarter(): number {
   const plan = planStarterImport(state.data, state.settings.meId);

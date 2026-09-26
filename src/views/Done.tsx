@@ -22,7 +22,7 @@ function groupOf(stamp: string, now: string): (typeof GROUPS)[number] {
 export function DoneView({ onOpen }: { onOpen: (t: Task) => void }) {
   const { data, settings } = useStore();
   const ctx = useRowContext(data, onOpen);
-  const [scope, setScope] = useState<'mine' | 'all'>('all');
+  const [scope, setScope] = useState<'mine' | 'all'>(settings.meId ? 'mine' : 'all');
   const now = today();
 
   const done = liveTasks(data)
@@ -32,7 +32,7 @@ export function DoneView({ onOpen }: { onOpen: (t: Task) => void }) {
 
   return (
     <div class="content">
-      {settings.meId && <Seg label="Show" value={scope} onChange={setScope} options={[['all', 'Everyone'], ['mine', 'Mine']]} />}
+      {settings.meId && <Seg label="Show" value={scope} onChange={setScope} options={[['mine', 'Mine'], ['all', 'Everyone']]} />}
       {done.length === 0 && <Empty title="Nothing finished yet">Completed tasks show up here.</Empty>}
       {GROUPS.map((g) => {
         const items = done.filter((t) => groupOf(t.completedAt, now) === g);

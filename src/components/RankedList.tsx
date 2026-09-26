@@ -1,7 +1,7 @@
 import { useEffect, useRef, useState } from 'preact/hooks';
 import type { Priority, Task } from '../api/types';
-import { save, showToast } from '../store/store';
-import { IconGrip } from './icons';
+import { deleteTask, save, showToast } from '../store/store';
+import { IconGrip, IconTrash } from './icons';
 import { TaskRow, type RowContext } from './TaskRow';
 
 const ORDER: Priority[] = ['high', 'med', 'low'];
@@ -17,10 +17,15 @@ interface Drag {
   width: number;
 }
 
-function laneAt(x: number, y: number): Priority | null {
+/** Where a drop would land: a priority lane, the trash zone, or nowhere. */
+type Target = Priority | 'trash';
+
+function targetAt(x: number, y: number): Target | null {
   const el = document.elementFromPoint(x, y)?.closest('[data-lane]') as HTMLElement | null;
-  return (el?.dataset.lane as Priority) ?? null;
+  return (el?.dataset.lane as Target) ?? null;
 }
+
+const TRASH_HEIGHT = 112;
 
 function setPriority(task: Task, p: Priority) {
   if (task.priority === p) return;
@@ -37,7 +42,7 @@ function setPriority(task: Task, p: Priority) {
  */
 export function RankedList({ tasks, ctx }: { tasks: Task[]; ctx: RowContext }) {
   const [drag, setDrag] = useState<Drag | null>(null);
-  const [over, setOver] = useState<Priority | null>(null);
+  const [over, setOver] = useState<Target | null>(null);
   const pointerY = useRef(0);
   const raf = useRef(0);
 
@@ -47,9 +52,11 @@ export function RankedList({ tasks, ctx }: { tasks: Task[]; ctx: RowContext }) {
     const tick = () => {
       const y = pointerY.current;
       const edge = 90;
-      const bottomEdge = window.innerHeight - 140; // tab bar + FAB
+      const trashTop = window.innerHeight - TRASH_HEIGHT;
+      const bottomEdge = trashTop - 80;
       if (y < edge) window.scrollBy(0, -Math.ceil((edge - y) / 6));
-      else if (y > bottomEdge) window.scrollBy(0, Math.ceil((y - bottomEdge) / 6));
+      // Scroll down in the band just above the trash zone, but hold still over the trash.
+      else if (y > bottomEdge && y < trashTop) window.scrollBy(0, Math.ceil((y - bottomEdge) / 6));
       raf.current = requestAnimationFrame(tick);
     };
     raf.current = requestAnimationFrame(tick);
@@ -73,13 +80,14 @@ export function RankedList({ tasks, ctx }: { tasks: Task[]; ctx: RowContext }) {
     if (!drag) return;
     pointerY.current = e.clientY;
     setDrag({ ...drag, x: e.clientX, y: e.clientY });
-    setOver(laneAt(e.clientX, e.clientY));
+    setOver(targetAt(e.clientX, e.clientY));
   };
 
   const end = (e: PointerEvent) => {
     if (!drag) return;
-    const lane = e.type === 'pointerup' ? laneAt(e.clientX, e.clientY) : null;
-    if (lane) setPriority(drag.task, lane);
+    const target = e.type === 'pointerup' ? targetAt(e.clientX, e.clientY) : null;
+    if (target === 'trash') deleteTask(drag.task);
+    else if (target) setPriority(drag.task, target);
     setDrag(null);
     setOver(null);
   };
@@ -88,6 +96,7 @@ export function RankedList({ tasks, ctx }: { tasks: Task[]; ctx: RowContext }) {
     const i = ORDER.indexOf(task.priority);
     if (e.key === 'ArrowUp' && i > 0) setPriority(task, ORDER[i - 1]);
     else if (e.key === 'ArrowDown' && i < ORDER.length - 1) setPriority(task, ORDER[i + 1]);
+    else if (e.key === 'Delete') deleteTask(task);
     else return;
     e.preventDefault();
   };
@@ -114,7 +123,7 @@ export function RankedList({ tasks, ctx }: { tasks: Task[]; ctx: RowContext }) {
                   trailing={
                     <button
                       class="drag-handle"
-                      aria-label={`Drag "${t.title}" to change priority (now ${LABEL[t.priority]}). Arrow keys also move it.`}
+                      aria-label={`Drag "${t.title}" to change priority (now ${LABEL[t.priority]}) or to the trash to delete. Arrow keys also move it.`}
                       data-testid="drag-handle"
                       onPointerDown={(e) => start(e, t)}
                       onPointerMove={move}
@@ -132,9 +141,15 @@ export function RankedList({ tasks, ctx }: { tasks: Task[]; ctx: RowContext }) {
           );
         })}
       </div>
-      <p class="hint ranked-hint">Drag the handle on a task to move it to another priority.</p>
+      <p class="hint ranked-hint">Drag the handle on a task to change its priority, or onto the trash to delete it.</p>
       {drag && (
-        <div class={`drag-ghost prio-${over ?? drag.task.priority}`} style={{ left: drag.x - drag.dx, top: drag.y - drag.dy, width: drag.width }} aria-hidden="true">
+        <div class={`trash-zone ${over === 'trash' ? 'is-over' : ''}`} data-lane="trash" data-testid="trash-zone" style={{ height: TRASH_HEIGHT }}>
+          <IconTrash />
+          <span>{over === 'trash' ? 'Release to delete' : 'Drag here to delete'}</span>
+        </div>
+      )}
+      {drag && (
+        <div class={`drag-ghost prio-${over && over !== 'trash' ? over : drag.task.priority} ${over === 'trash' ? 'to-trash' : ''}`} style={{ left: drag.x - drag.dx, top: drag.y - drag.dy, width: drag.width }} aria-hidden="true">
           {drag.task.title}
         </div>
       )}

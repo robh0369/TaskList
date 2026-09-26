@@ -20,7 +20,10 @@ test('running list: add, rank, complete, undo, done tab, reports', async ({ page
   await page.getByRole('button', { name: /Alex/ }).click();
 
   // Home is the ranked list.
-  await expect(page.getByRole('heading', { name: /Tasks/ })).toBeVisible();
+  await expect(page.getByRole('heading', { name: 'Tasks' })).toBeVisible();
+  // No date or sync dot cluttering the header.
+  await expect(page.locator('.topbar .sub')).toHaveCount(0);
+  await expect(page.locator('.sync-dot')).toHaveCount(0);
   await expect(page.getByTestId('lane-high')).toBeVisible();
   await page.getByRole('button', { name: 'Everyone' }).click();
   await snap(page, '1-home');
@@ -47,6 +50,8 @@ test('running list: add, rank, complete, undo, done tab, reports', async ({ page
 
   await tab(page, 'Done').click();
   await expect(page.getByRole('heading', { name: 'Today' })).toBeVisible();
+  // Mine / Everyone in the same order as on Tasks.
+  await expect(page.getByRole('group', { name: 'Show' }).getByRole('button')).toHaveText(['Mine', 'Everyone']);
   const doneRow = page.getByTestId('task-row').filter({ hasText: 'Fix gutter' });
   await expect(doneRow).toBeVisible();
   await snap(page, '3-done');
