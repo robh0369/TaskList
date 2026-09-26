@@ -1,7 +1,12 @@
 // Offline support: the app shell is cached so the app opens without a connection.
 // Data requests (to Apps Script) always go to the network; the app keeps its own
 // local copy of the data and an outbox of unsent changes.
-const CACHE = 'hometasks-v3';
+//
+// Only the hashed build files in assets/ are served cache-first (their names
+// change whenever their content does). Everything else — the page, the
+// manifest, icons — is network-first, so renames and new icons show up right
+// away, with the cached copy used only when offline.
+const CACHE = 'tasklist-v4';
 
 self.addEventListener('install', (event) => {
   event.waitUntil(caches.open(CACHE).then((c) => c.addAll(['./', './index.html', './manifest.webmanifest'])));
@@ -14,37 +19,42 @@ self.addEventListener('activate', (event) => {
   );
 });
 
+function networkFirst(req, cacheKey) {
+  return fetch(req)
+    .then((res) => {
+      if (res.ok) {
+        const copy = res.clone();
+        caches.open(CACHE).then((c) => c.put(cacheKey ?? req, copy));
+      }
+      return res;
+    })
+    .catch(() => caches.match(cacheKey ?? req));
+}
+
+function cacheFirst(req) {
+  return caches.match(req).then(
+    (hit) =>
+      hit ||
+      fetch(req).then((res) => {
+        if (res.ok) {
+          const copy = res.clone();
+          caches.open(CACHE).then((c) => c.put(req, copy));
+        }
+        return res;
+      }),
+  );
+}
+
 self.addEventListener('fetch', (event) => {
   const req = event.request;
   const url = new URL(req.url);
   if (req.method !== 'GET' || url.origin !== self.location.origin) return;
 
-  // Network-first for pages so new deploys show up; cache fallback when offline.
   if (req.mode === 'navigate') {
-    event.respondWith(
-      fetch(req)
-        .then((res) => {
-          const copy = res.clone();
-          caches.open(CACHE).then((c) => c.put('./index.html', copy));
-          return res;
-        })
-        .catch(() => caches.match('./index.html')),
-    );
-    return;
+    event.respondWith(networkFirst(req, './index.html'));
+  } else if (url.pathname.includes('/assets/')) {
+    event.respondWith(cacheFirst(req));
+  } else {
+    event.respondWith(networkFirst(req));
   }
-
-  // Hashed build assets never change: cache-first.
-  event.respondWith(
-    caches.match(req).then(
-      (hit) =>
-        hit ||
-        fetch(req).then((res) => {
-          if (res.ok) {
-            const copy = res.clone();
-            caches.open(CACHE).then((c) => c.put(req, copy));
-          }
-          return res;
-        }),
-    ),
-  );
 });
