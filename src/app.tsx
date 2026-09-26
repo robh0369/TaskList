@@ -138,10 +138,6 @@ export function App() {
 
   const title =
     { tasks: 'Tasks', done: 'Done', reports: 'Reports', settings: 'Settings' }[route.name];
-  const subtitle =
-    route.name === 'tasks'
-      ? new Date().toLocaleDateString(undefined, { weekday: 'long', month: 'long', day: 'numeric' })
-      : '';
   const tabActive = route.name;
 
   return (
@@ -152,13 +148,13 @@ export function App() {
             <IconBack />
           </button>
         )}
-        <h1>
-          {subtitle && <span class="sub">{subtitle}</span>}
-          {title}
-        </h1>
-        <button class="sync-dot" data-s={sync.status} onClick={() => void syncNow()} aria-label={`Sync status: ${sync.status}. Tap to sync.`}>
-          <i />
-        </button>
+        <h1>{title}</h1>
+        {(sync.status === 'offline' || sync.status === 'error') && (
+          // Quiet when everything is fine; only speaks up when changes aren't reaching the Sheet.
+          <button class="sync-issue" onClick={() => void syncNow()} title={sync.error || 'Tap to retry'}>
+            {sync.status === 'offline' ? 'Offline' : 'Not synced · Retry'}
+          </button>
+        )}
         {route.name !== 'settings' && (
           <button class="icon-btn" aria-label="Settings" onClick={() => go('settings')} style={{ marginRight: -8 }}>
             {me ? <Avatar member={me} /> : <IconGear />}
