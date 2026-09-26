@@ -45,12 +45,4 @@ export class SheetsBackend implements Backend {
   push(mutations: Mutation[]): Promise<SyncResult> {
     return this.call<SyncResult>('push', { mutations });
   }
-
-  uploadPhoto(dataUrl: string, name: string): Promise<{ fileId: string; url: string }> {
-    return this.call('uploadPhoto', { dataUrl, name });
-  }
-
-  photoUrl(fileId: string): string {
-    return `https://drive.google.com/thumbnail?id=${encodeURIComponent(fileId)}&sz=w1200`;
-  }
 }

@@ -61,7 +61,6 @@ function loadScript() {
   const sheets = new Map<string, FakeSheet>();
   const props = new Map<string, string>();
   const cache = new Map<string, string>();
-  const files: { id: string; bytes: number }[] = [];
   const globals = {
     SpreadsheetApp: {
       getActiveSpreadsheet: () => ({
@@ -86,18 +85,6 @@ function loadScript() {
       MimeType: { JSON: 'json' },
       createTextOutput: (s: string) => ({ body: s, setMimeType() { return this; } }),
     },
-    DriveApp: {
-      Access: { ANYONE_WITH_LINK: 'a' },
-      Permission: { VIEW: 'v' },
-      getFoldersByName: () => ({ hasNext: () => false }),
-      createFolder: () => ({
-        createFile: (blob: { bytes: number[] }) => {
-          const f = { id: 'file' + files.length, bytes: blob.bytes.length };
-          files.push(f);
-          return { getId: () => f.id, setSharing() {} };
-        },
-      }),
-    },
     Utilities: {
       base64Decode: (s: string) => Array.from(Buffer.from(s, 'base64')),
       newBlob: (bytes: number[]) => ({ bytes }),
@@ -109,7 +96,7 @@ function loadScript() {
   const factory = new Function(...Object.keys(globals), src + '\nreturn { doPost, doGet };');
   const api = factory(...Object.values(globals)) as { doPost: (e: unknown) => { body: string }; doGet: () => { body: string } };
   const call = (body: unknown) => JSON.parse(api.doPost({ postData: { contents: JSON.stringify(body) } }).body);
-  return { call, sheets, props, files, api };
+  return { call, sheets, props, api };
 }
 
 let env: ReturnType<typeof loadScript>;
@@ -166,12 +153,9 @@ describe('Code.gs', () => {
     expect(env.sheets.get('Tasks')!.getLastRow()).toBe(2);
   });
 
-  it('stores photos in Drive', () => {
+  it('has no photo upload (Drive is not used)', () => {
     env.call({ action: 'pull', passcode: 'secret', since: 0 });
-    const r = env.call({ action: 'uploadPhoto', passcode: 'secret', dataUrl: 'data:image/jpeg;base64,' + Buffer.from('hello').toString('base64'), name: 'x.jpg' });
-    expect(r).toMatchObject({ ok: true, fileId: 'file0' });
-    expect(env.files[0].bytes).toBe(5);
-    expect(env.call({ action: 'uploadPhoto', passcode: 'secret', dataUrl: 'nope' }).ok).toBe(false);
+    expect(env.call({ action: 'uploadPhoto', passcode: 'secret', dataUrl: 'x' })).toEqual({ ok: false, error: 'unknown action' });
   });
 
   it('doGet responds so the URL can be checked in a browser', () => {

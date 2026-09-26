@@ -28,6 +28,9 @@ jobs:
       - run: npm ci
       - run: npm test
       - run: npm run build
+        env:
+          # The household's Apps Script web app. Not secret: every request also needs the passcode.
+          VITE_API_URL: https://script.google.com/macros/s/AKfycbwhM96DacWmzad15Jc-41w0HFnWBOq-XDst6-FcTmrOFruV5mznpVkwHGdGCkVorEs/exec
       - name: Publish to gh-pages
         if: github.event_name != 'pull_request'
         uses: peaceiris/actions-gh-pages@v4

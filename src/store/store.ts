@@ -3,6 +3,7 @@ import { SheetsBackend } from '../api/client';
 import { DemoBackend } from '../api/mock';
 import type { AnyRecord, Backend, Collections, CollectionName, Completion, Mutation, Row, Task } from '../api/types';
 import { AuthError, COLLECTIONS } from '../api/types';
+import { DEFAULT_API_URL } from '../config';
 import { nowStamp, relativeLabel, today } from '../lib/dates';
 import { uid } from '../lib/defaults';
 import { nextOccurrence } from '../lib/recurrence';
@@ -63,7 +64,8 @@ function loadCache(s: Settings) {
   return read(cacheKey(s), { data: emptyData(), rev: 0, outbox: [] as Mutation[] });
 }
 
-const initialSettings = read<Settings>(SETTINGS_KEY, { apiUrl: '', passcode: '', meId: '', theme: 'system' });
+const storedSettings = read<Settings>(SETTINGS_KEY, { apiUrl: '', passcode: '', meId: '', theme: 'system' });
+const initialSettings: Settings = { ...storedSettings, apiUrl: storedSettings.apiUrl || DEFAULT_API_URL };
 const initialCache = loadCache(initialSettings);
 
 let state: State = {
@@ -112,6 +114,7 @@ export function getBackend(): Backend {
 }
 
 export function updateSettings(patch: Partial<Settings>) {
+  if (patch.apiUrl !== undefined) patch = { ...patch, apiUrl: patch.apiUrl || DEFAULT_API_URL };
   const settings = { ...state.settings, ...patch };
   write(SETTINGS_KEY, settings);
   const connectionChanged = patch.apiUrl !== undefined && patch.apiUrl !== state.settings.apiUrl;
@@ -252,7 +255,8 @@ export function syncNow(): Promise<void> {
 }
 
 async function syncOnce() {
-  if (state.sync.status === 'auth' && backend.kind === 'sheets') return;
+  // Connected to a Sheet but no passcode yet (or a rejected one): wait for the user.
+  if (backend.kind === 'sheets' && (!state.settings.passcode || state.sync.status === 'auth')) return;
   const b = backend;
   setState({ sync: { ...state.sync, status: 'syncing' } });
   try {

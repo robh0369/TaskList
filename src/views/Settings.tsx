@@ -98,7 +98,7 @@ export function SettingsView() {
           </label>
           <div class="field" style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
             <button class="btn primary" disabled={url === settings.apiUrl && pass === settings.passcode} onClick={() => updateSettings({ apiUrl: url, passcode: pass })}>
-              {url ? 'Connect' : 'Use demo mode'}
+              {url ? 'Connect' : 'Save'}
             </button>
             <button class="btn" onClick={() => void syncNow()}>Sync now</button>
           </div>
