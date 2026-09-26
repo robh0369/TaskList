@@ -1,7 +1,7 @@
 {
   "id": "./",
-  "name": "Home Tasks",
-  "short_name": "Home Tasks",
+  "name": "TaskList",
+  "short_name": "TaskList",
   "description": "Shared household task list.",
   "start_url": "./",
   "scope": "./",
