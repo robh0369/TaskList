@@ -1,10 +1,11 @@
+import type { ComponentChildren } from 'preact';
 import type { Category, Member, Project, Task } from '../api/types';
 import { relativeLabel } from '../lib/dates';
 import { describeRecurrence } from '../lib/recurrence';
 import { dueClass } from '../store/selectors';
 import { completeTask, reopenTask } from '../store/store';
 import { AssigneeAvatar } from './common';
-import { IconCheck, IconComment, IconFolder, IconRepeat, IconSub } from './icons';
+import { IconCheck, IconComment, IconFlag, IconFolder, IconRepeat, IconSub } from './icons';
 
 export interface RowContext {
   members: Member[];
@@ -15,7 +16,18 @@ export interface RowContext {
   onOpen: (t: Task) => void;
 }
 
-export function TaskRow({ task, ctx, hideProject }: { task: Task; ctx: RowContext; hideProject?: boolean }) {
+export interface TaskRowProps {
+  task: Task;
+  ctx: RowContext;
+  hideProject?: boolean;
+  /** Hide the High/Low label (e.g. on the priority board, where the lane shows it). */
+  hidePriority?: boolean;
+  /** Extra control at the end of the row, such as a drag handle. */
+  trailing?: ComponentChildren;
+  class?: string;
+}
+
+export function TaskRow({ task, ctx, hideProject, hidePriority, trailing, class: extra }: TaskRowProps) {
   const cat = ctx.categories.get(task.categoryId);
   const project = hideProject ? undefined : ctx.projects.get(task.projectId);
   const comments = ctx.commentCounts.get(task.id) ?? 0;
@@ -29,7 +41,7 @@ export function TaskRow({ task, ctx, hideProject }: { task: Task; ctx: RowContex
   };
 
   return (
-    <div class={`task ${done ? 'is-done' : ''}`} data-testid="task-row">
+    <div class={`task ${done ? 'is-done' : ''} ${extra ?? ''}`} data-testid="task-row" data-task-id={task.id}>
       <button
         class={`check ${done ? 'done' : ''}`}
         data-p={task.priority}
@@ -41,6 +53,11 @@ export function TaskRow({ task, ctx, hideProject }: { task: Task; ctx: RowContex
       <button class="task-body" onClick={() => ctx.onOpen(task)}>
         <div class="task-title">{task.title}</div>
         <div class="task-meta">
+          {!hidePriority && !done && task.priority !== 'med' && (
+            <span class={`prio prio-${task.priority}`}>
+              <IconFlag /> {task.priority === 'high' ? 'High' : 'Low'}
+            </span>
+          )}
           {task.dueDate && !done && <span class={dueClass(task.dueDate)}>{relativeLabel(task.dueDate)}</span>}
           {task.recurrence && (
             <span title={describeRecurrence(task.recurrence)}>
@@ -71,6 +88,7 @@ export function TaskRow({ task, ctx, hideProject }: { task: Task; ctx: RowContex
         </div>
       </button>
       <AssigneeAvatar assigneeId={task.assigneeId} members={ctx.members} />
+      {trailing}
     </div>
   );
 }

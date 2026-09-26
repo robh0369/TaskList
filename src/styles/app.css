@@ -289,3 +289,28 @@ button { cursor: pointer; }
   *, *::before, *::after { animation-duration: 0.01ms !important; transition-duration: 0.01ms !important; }
 }
 .onboard .error-text { color: var(--danger); }
+
+/* ---------- Priority labels ---------- */
+.task-meta .prio { font-weight: 600; }
+.task-meta .prio-high { color: var(--danger); }
+.task-meta .prio-low { color: var(--text-3); }
+
+/* ---------- Priority board (drag & drop) ---------- */
+.lane-card { transition: box-shadow 0.15s, background 0.15s; min-height: 56px; }
+.lane-over .lane-card { box-shadow: 0 0 0 2px var(--accent), var(--shadow); background: var(--accent-soft); }
+.lane-empty { padding: 18px 16px; text-align: center; color: var(--text-3); font-size: 14px; border: 2px dashed var(--line); border-radius: var(--radius); margin: 8px; }
+.drag-handle {
+  flex: none; align-self: center; width: 40px; height: 44px; margin: -8px -8px -8px 0;
+  border: 0; background: none; color: var(--text-3); display: grid; place-items: center;
+  touch-action: none; cursor: grab; border-radius: 8px; user-select: none; -webkit-user-select: none;
+}
+.drag-handle svg { width: 20px; height: 20px; }
+.drag-handle:hover { background: var(--surface-2); color: var(--text-2); }
+.is-dragging, .is-dragging * { cursor: grabbing !important; user-select: none; -webkit-user-select: none; }
+.task.is-drag-source { opacity: 0.35; }
+.drag-ghost {
+  position: fixed; z-index: 60; pointer-events: none;
+  background: var(--surface); color: var(--text); border-radius: 12px; padding: 14px 16px;
+  font-weight: 600; box-shadow: var(--shadow-lg); transform: rotate(-1.5deg) scale(1.02);
+  white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+}

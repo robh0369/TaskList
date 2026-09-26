@@ -5,7 +5,8 @@ import { Avatar, Seg } from '../components/common';
 import { IconClose, IconPlus } from '../components/icons';
 import { MEMBER_COLORS, uid } from '../lib/defaults';
 import { activeCategories, activeMembers } from '../store/selectors';
-import { remove, save, syncNow, updateSettings, useStore } from '../store/store';
+import { planStarterImport } from '../lib/starter';
+import { importStarter, remove, save, showToast, syncNow, updateSettings, useStore } from '../store/store';
 
 const SETUP_URL = 'https://github.com/robh0369/TaskList#connect-your-google-sheet';
 
@@ -60,6 +61,21 @@ export function SettingsView() {
           </button>
         </div>
       </section>
+
+      {planStarterImport(data).tasks.length > 0 && (
+        <section class="section">
+          <div class="section-h"><h2>Starting list</h2></div>
+          <div class="card card-pad">
+            <p style={{ margin: '0 0 12px', color: 'var(--text-2)', fontSize: 15 }}>
+              Adds the {planStarterImport(data).tasks.length} tasks from Rob &amp; Rebecca's handwritten list, with their priorities and a 🧰 Hire out category.
+              Tasks that are already added are skipped.
+            </p>
+            <button class="btn primary block" data-testid="import-starter-settings" onClick={() => showToast(`Added ${importStarter()} tasks`)}>
+              Load starting list
+            </button>
+          </div>
+        </section>
+      )}
 
       <section class="section">
         <div class="section-h"><h2>Categories</h2></div>

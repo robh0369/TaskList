@@ -7,6 +7,7 @@ import { DEFAULT_API_URL } from '../config';
 import { nowStamp, relativeLabel, today } from '../lib/dates';
 import { uid } from '../lib/defaults';
 import { nextOccurrence } from '../lib/recurrence';
+import { planStarterImport } from '../lib/starter';
 
 export interface Settings {
   apiUrl: string;
@@ -216,6 +217,15 @@ export function completeTask(task: Task, by = state.settings.meId || task.assign
 function nextLabel(task: Task) {
   const t = state.data.tasks.find((x) => x.id === task.id);
   return t?.dueDate ? relativeLabel(t.dueDate) : '';
+}
+
+/** Adds the household's starting list. Safe to run more than once. Returns tasks added. */
+export function importStarter(): number {
+  const plan = planStarterImport(state.data, state.settings.meId);
+  plan.members.forEach((m) => save('members', m));
+  plan.categories.forEach((c) => save('categories', c));
+  plan.tasks.forEach((t) => save('tasks', t));
+  return plan.tasks.length;
 }
 
 export function reopenTask(task: Task) {

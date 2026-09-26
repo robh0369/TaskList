@@ -23,3 +23,4 @@ export const IconComment = (p: P) => base(<path d="M4 5h16v11H9l-5 4z" />, p);
 export const IconTrash = (p: P) => base(<><path d="M4 7h16M9 7V4h6v3M6 7l1 13h10l1-13" /></>, p);
 export const IconFlag = (p: P) => base(<path d="M5 21V4h11l-2 4 2 4H5" />, p);
 export const IconSub = (p: P) => base(<><path d="M6 4v10a3 3 0 0 0 3 3h9" /><path d="m15 14 3 3-3 3" /></>, p);
+export const IconGrip = (p: P) => base(<><circle cx="9" cy="6" r="1.4" fill="currentColor" stroke="none" /><circle cx="15" cy="6" r="1.4" fill="currentColor" stroke="none" /><circle cx="9" cy="12" r="1.4" fill="currentColor" stroke="none" /><circle cx="15" cy="12" r="1.4" fill="currentColor" stroke="none" /><circle cx="9" cy="18" r="1.4" fill="currentColor" stroke="none" /><circle cx="15" cy="18" r="1.4" fill="currentColor" stroke="none" /></>, p);
