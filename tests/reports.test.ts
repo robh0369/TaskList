@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import type { Collections, Completion } from '../src/api/types';
+import type { Collections, Completion, Task } from '../src/api/types';
 import { blankTask, defaultCategories, defaultMembers } from '../src/lib/defaults';
 import { buildReport } from '../src/lib/reports';
 
@@ -9,19 +9,16 @@ function done(p: Partial<Completion>): Completion {
   return { id: Math.random().toString(), taskId: '', title: 'x', completedBy: 'm1', completedAt: '2026-09-25T15:00:00', dueDate: '', effort: 2, categoryId: 'c1', updatedAt: '', deleted: false, ...p };
 }
 
-function data(completions: Completion[], tasks = [blankTask()]): Collections {
+function data(completions: Completion[], tasks: Task[] = []): Collections {
   return { tasks, completions, projects: [], comments: [], members: defaultMembers(), categories: defaultCategories() };
 }
 
 describe('buildReport', () => {
   it('splits workload, crediting shared tasks half each', () => {
-    const r = buildReport(data([done({ completedBy: 'm1', effort: 4 }), done({ completedBy: 'both', effort: 2 })]), 7, NOW);
-    const m1 = r.workload.find((l) => l.memberId === 'm1')!;
-    const m2 = r.workload.find((l) => l.memberId === 'm2')!;
-    expect(m1).toMatchObject({ count: 1.5 });
-    expect(m2).toMatchObject({ count: 0.5 });
+    const r = buildReport(data([done({ completedBy: 'm1' }), done({ completedBy: 'both' })]), 7, NOW);
+    expect(r.workload.find((l) => l.memberId === 'm1')!.count).toBe(1.5);
+    expect(r.workload.find((l) => l.memberId === 'm2')!.count).toBe(0.5);
     expect(r.totalDone).toBe(2);
-    expect(r.openCount).toBe(1);
   });
 
   it('excludes completions outside the range and deleted ones', () => {
@@ -29,38 +26,37 @@ describe('buildReport', () => {
     expect(r.totalDone).toBe(1);
   });
 
-  it('computes on-time rate only over dated completions', () => {
+  it('counts tasks added and still open', () => {
+    const tasks = [
+      blankTask({ createdAt: '2026-09-24T10:00:00' }),
+      blankTask({ createdAt: '2026-08-01T10:00:00' }),
+      blankTask({ createdAt: '2026-09-25T10:00:00', status: 'done' }),
+      blankTask({ createdAt: '2026-09-25T10:00:00', parentId: 'x' }), // subtask: ignored
+    ];
+    const r = buildReport(data([], tasks), 7, NOW);
+    expect(r.totalAdded).toBe(2);
+    expect(r.openCount).toBe(2);
+  });
+
+  it('buckets weekly done and added by Monday-start weeks, current week last', () => {
     const r = buildReport(
-      data([
-        done({ dueDate: '2026-09-25' }), // on time
-        done({ dueDate: '2026-09-20' }), // late
-        done({ dueDate: '' }), // no due date → ignored
-      ]),
+      data([done({ completedAt: '2026-09-21T09:00:00' }), done({ completedAt: '2026-09-20T09:00:00' })], [blankTask({ createdAt: '2026-09-22T09:00:00' })]),
       30,
       NOW,
     );
-    expect(r.onTimeRate).toBe(0.5);
-  });
-
-  it('buckets weekly trend by Monday-start weeks, current week last', () => {
-    const r = buildReport(data([done({ completedAt: '2026-09-21T09:00:00' }), done({ completedAt: '2026-09-20T09:00:00' })]), 30, NOW);
     const last = r.weekly[r.weekly.length - 1];
-    expect(last.weekStart).toBe('2026-09-21');
-    expect(last.count).toBe(1);
+    expect(last).toMatchObject({ weekStart: '2026-09-21', count: 1, added: 1 });
     expect(r.weekly[r.weekly.length - 2].count).toBe(1);
   });
 
-  it('finds overdue, due-this-week and stale tasks', () => {
+  it('lists stale open tasks, oldest first', () => {
     const tasks = [
-      blankTask({ title: 'late', dueDate: '2026-09-20' }),
-      blankTask({ title: 'soon', dueDate: '2026-09-28' }),
+      blankTask({ title: 'fresh' }),
       blankTask({ title: 'old', updatedAt: '2026-08-01T00:00:00Z' }),
-      blankTask({ title: 'closed', dueDate: '2026-09-01', status: 'done' }),
+      blankTask({ title: 'older', updatedAt: '2026-07-01T00:00:00Z' }),
+      blankTask({ title: 'closed', updatedAt: '2026-07-01T00:00:00Z', status: 'done' }),
     ];
-    const r = buildReport(data([], tasks), 30, NOW);
-    expect(r.overdue.map((t) => t.title)).toEqual(['late']);
-    expect(r.dueThisWeek.map((t) => t.title)).toEqual(['soon']);
-    expect(r.stale.map((t) => t.title)).toEqual(['old']);
+    expect(buildReport(data([], tasks), 30, NOW).stale.map((t) => t.title)).toEqual(['older', 'old']);
   });
 
   it('groups by category, most first', () => {

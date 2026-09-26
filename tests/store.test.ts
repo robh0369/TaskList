@@ -31,18 +31,6 @@ describe('store + demo backend', () => {
     expect(pulled.changes.tasks!.some((x) => x.id === t.id)).toBe(true);
   });
 
-  it('completing a recurring task logs a completion and rolls the due date', async () => {
-    await syncNow();
-    const t = save('tasks', blankTask({ title: 'Trash', dueDate: '2026-09-22', recurrence: { freq: 'weekly', interval: 1, mode: 'fixed' } }));
-    completeTask(t);
-    const after = getState().data.tasks.find((x) => x.id === t.id)!;
-    expect(after.status).toBe('open');
-    expect(after.dueDate > t.dueDate).toBe(true);
-    const log = getState().data.completions.filter((c) => c.taskId === t.id);
-    expect(log).toHaveLength(1);
-    expect(log[0].completedBy).toBe('m1');
-  });
-
   it('undo restores the task and removes the completion', async () => {
     await syncNow();
     const t = save('tasks', blankTask({ title: 'Once' }));

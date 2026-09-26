@@ -2,12 +2,12 @@
 
 A shared household task list for a two-person household. It installs on your phones like an app, and it's free to host on GitHub Pages. You can keep the data in a Google Sheet that you own.
 
-- **Today view:** what's overdue, what's due today and the next 7 days, with a Mine / Everyone toggle
-- **Quick add:** type `Mow lawn sat @Sam #Yard every 2 weeks !high` and the date, person, category, repeat rule and priority fill themselves in
-- **Recurring chores:** daily, weekly (on chosen weekdays), or monthly, either *on schedule* or *counted from when it was done*
+- **A running list, no due dates:** the home screen is everything still to do, ranked High → Medium → Low (oldest first within each), with a Mine / Everyone toggle
+- **Quick add:** type `Fix gutter @Rob #Home !high` and the person, category and priority fill themselves in
+- **Done tab:** finished tasks grouped by Today, Yesterday, This week and earlier. Tap the check to put a task back on the list.
 - **Priorities:** a ranked High / Medium / Low list. Drag a task past a divider to change its priority. Tasks can also have their own checklist of subtasks.
 - **Comments** on any task, for example "bought the filter, it's in the garage"
-- **Reports:** the workload split between you (by tasks completed), completions per week, on-time rate, a breakdown by category, and lists of overdue and stale tasks
+- **Reports:** the workload split between you (by tasks completed), tasks added vs done each week, a breakdown by category, and tasks that have been waiting 2+ weeks
 - **Works offline:** changes queue up on the phone and sync when you're back online, and light and dark mode follow the phone's setting
 
 ---
@@ -49,7 +49,7 @@ If `Code.gs` changes, paste the new version and use **Deploy → Manage deployme
 ### How the data is stored
 - Each tab is a plain table, so you can read, filter or chart it in Sheets. Avoid editing the header row or the `id` and `_rev` columns by hand.
 - Deletes are "soft": the row stays with `deleted = TRUE`, which lets undo work across devices.
-- `Completions` is an append-only history of every time a task was done. The reports are built from it, so a recurring chore keeps its full history.
+- `Completions` is an append-only history of every time a task was done. The reports are built from it.
 
 ### Security, in plain terms
 The site itself is public (that's how GitHub Pages works), but it contains no data. Every request to your Sheet must include the passcode, and the script rejects any request without it. The Sheet stays private to your Google account. This is appropriate for a chore list, but not for anything sensitive.
@@ -61,7 +61,7 @@ The site itself is public (that's how GitHub Pages works), but it contains no da
 ```bash
 npm install
 npm run dev        # http://localhost:5173 (demo mode)
-npm test           # unit tests: recurrence, quick-add parser, reports, store sync, Code.gs contract
+npm test           # unit tests: quick-add parser, reports, store sync, Code.gs contract
 npm run build      # production build into dist/
 npx playwright test  # end-to-end smoke test on a phone-sized viewport
 ```
@@ -73,7 +73,7 @@ src/
   api/        Backend interface, Google Sheets client, and the in-browser demo backend
   store/      App state, optimistic writes + outbox, background sync
   lib/        Recurrence rules, quick-add parser, reports, date helpers
-  views/      Today, Tasks, Reports, Settings
+  views/      Tasks, Done, Reports, Settings
   components/ Task row, task sheet, charts, shared UI
 apps-script/  Code.gs: the Google Apps Script backend
 ```

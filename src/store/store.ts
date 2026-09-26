@@ -4,9 +4,8 @@ import { DemoBackend } from '../api/mock';
 import type { AnyRecord, Backend, Collections, CollectionName, Completion, Mutation, Row, Task } from '../api/types';
 import { AuthError, COLLECTIONS } from '../api/types';
 import { DEFAULT_API_URL } from '../config';
-import { nowStamp, relativeLabel, today } from '../lib/dates';
+import { nowStamp } from '../lib/dates';
 import { uid } from '../lib/defaults';
-import { nextOccurrence } from '../lib/recurrence';
 import { planStarterImport } from '../lib/starter';
 
 export interface Settings {
@@ -182,10 +181,7 @@ export function dismissToast() {
   setState({ toast: null });
 }
 
-/**
- * Completes a task. Recurring tasks log a completion and roll forward to the
- * next due date; one-off tasks are marked done. Returns an undo function.
- */
+/** Marks a task done and logs the completion for reports. Returns an undo function. */
 export function completeTask(task: Task, by = state.settings.meId || task.assigneeId) {
   const completion: Completion = {
     id: uid('x'),
@@ -193,30 +189,20 @@ export function completeTask(task: Task, by = state.settings.meId || task.assign
     title: task.title,
     completedBy: by || 'both',
     completedAt: nowStamp(),
-    dueDate: task.dueDate,
+    dueDate: '',
     effort: task.effort,
     categoryId: task.categoryId,
     updatedAt: nowStamp(),
     deleted: false,
   };
   save('completions', completion);
-  if (task.recurrence) {
-    const next = nextOccurrence(task.recurrence, task.dueDate, today());
-    save('tasks', { ...task, dueDate: next, completedAt: completion.completedAt, completedBy: completion.completedBy });
-  } else {
-    save('tasks', { ...task, status: 'done', completedAt: completion.completedAt, completedBy: completion.completedBy });
-  }
+  save('tasks', { ...task, status: 'done', completedAt: completion.completedAt, completedBy: completion.completedBy });
   const undo = () => {
     save('tasks', task);
     remove('completions', completion);
   };
-  showToast(task.recurrence ? `Done · next due ${nextLabel(task)}` : 'Done', undo);
+  showToast('Done', undo);
   return undo;
-}
-
-function nextLabel(task: Task) {
-  const t = state.data.tasks.find((x) => x.id === task.id);
-  return t?.dueDate ? relativeLabel(t.dueDate) : '';
 }
 
 /** Adds the household's starting list. Safe to run more than once. Returns tasks added. */

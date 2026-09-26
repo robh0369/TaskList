@@ -1,5 +1,4 @@
 import type { Category, Collections, Member, Task } from '../api/types';
-import { today } from '../lib/dates';
 
 export function activeMembers(d: Collections): Member[] {
   return d.members.filter((m) => !m.deleted);
@@ -22,19 +21,11 @@ export function isMine(t: Task, meId: string): boolean {
   return !meId || t.assigneeId === meId || t.assigneeId === 'both' || t.assigneeId === '';
 }
 
-export function sortTasks(a: Task, b: Task): number {
-  // Open first, then dated before undated, then by date, then priority.
-  if (a.status !== b.status) return a.status === 'open' ? -1 : 1;
-  if (!!a.dueDate !== !!b.dueDate) return a.dueDate ? -1 : 1;
-  if (a.dueDate !== b.dueDate) return a.dueDate.localeCompare(b.dueDate);
-  const pr = { high: 0, med: 1, low: 2 };
-  if (a.priority !== b.priority) return pr[a.priority] - pr[b.priority];
-  return a.createdAt.localeCompare(b.createdAt);
-}
+const RANK = { high: 0, med: 1, low: 2 };
 
-export function dueClass(date: string, now = today()): string {
-  if (!date) return '';
-  if (date < now) return 'due-overdue';
-  if (date === now) return 'due-today';
-  return '';
+/** Open first, then High → Medium → Low, then oldest first (it's been waiting longest). */
+export function sortTasks(a: Task, b: Task): number {
+  if (a.status !== b.status) return a.status === 'open' ? -1 : 1;
+  if (a.priority !== b.priority) return RANK[a.priority] - RANK[b.priority];
+  return a.createdAt.localeCompare(b.createdAt);
 }
