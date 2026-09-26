@@ -1,7 +1,7 @@
 // Offline support: the app shell is cached so the app opens without a connection.
 // Data requests (to Apps Script) always go to the network; the app keeps its own
 // local copy of the data and an outbox of unsent changes.
-const CACHE = 'hometasks-v2';
+const CACHE = 'hometasks-v3';
 
 self.addEventListener('install', (event) => {
   event.waitUntil(caches.open(CACHE).then((c) => c.addAll(['./', './index.html', './manifest.webmanifest'])));
