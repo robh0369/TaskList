@@ -2,8 +2,13 @@ import { expect, test, type Page } from '@playwright/test';
 
 const shots = process.env.SCREENSHOTS ? 'e2e/screenshots/' : '';
 const tab = (page: Page, name: string) => page.getByRole('navigation', { name: 'Main' }).getByRole('button', { name });
+const titles = (page: Page, lane: string) => page.getByTestId(`lane-${lane}`).locator('.task-title').allTextContents();
+const hireOut = async (page: Page) => {
+  await page.getByRole('button', { name: 'Everyone' }).click();
+  await page.getByTestId('filter-category').selectOption({ label: 'Hire out' });
+};
 
-test('load starting list, then drag a task between priority lanes', async ({ page }) => {
+test('load starting list, reorder within a section, move between sections, delete', async ({ page }) => {
   await page.goto('./');
   await page.evaluate(() => localStorage.clear());
   await page.goto('./#/settings');
@@ -18,11 +23,26 @@ test('load starting list, then drag a task between priority lanes', async ({ pag
   // Board groups by priority; filter to the Hire out category.
   await tab(page, 'Tasks').click();
   await expect(page.getByTestId('lane-high')).toBeVisible();
-  await page.getByRole('button', { name: 'Everyone' }).click();
-  await page.getByTestId('filter-category').selectOption({ label: 'Hire out' });
+  await hireOut(page);
   await expect(page.getByTestId('lane-high').getByTestId('task-row')).toHaveCount(3);
   await expect(page.getByTestId('lane-low').getByTestId('task-row')).toHaveCount(3);
   if (shots) await page.screenshot({ path: `${shots}p1-board.png` });
+
+  // Reorder within High: drag the last task above the first.
+  expect(await titles(page, 'high')).toEqual(['Mop floors', 'Shampoo all carpets', 'Clean all bathrooms, showers & drains']);
+  const lastHandle = page.getByTestId('lane-high').getByTestId('task-row').filter({ hasText: 'Clean all bathrooms' }).getByTestId('drag-handle');
+  await lastHandle.evaluate((el) => el.scrollIntoView({ block: 'center' }));
+  const lb = (await lastHandle.boundingBox())!;
+  const firstRow = (await page.getByTestId('lane-high').getByTestId('task-row').first().boundingBox())!;
+  await page.mouse.move(lb.x + lb.width / 2, lb.y + lb.height / 2);
+  await page.mouse.down();
+  await page.mouse.move(lb.x, firstRow.y + 8, { steps: 12 });
+  await expect(page.getByTestId('drop-line')).toHaveCount(1);
+  await expect(page.getByTestId('lane-high')).not.toHaveClass(/lane-over/);
+  if (shots) await page.screenshot({ path: `${shots}p1b-reorder.png` });
+  await page.mouse.up();
+  await expect(page.getByTestId('drop-line')).toHaveCount(0);
+  expect(await titles(page, 'high')).toEqual(['Clean all bathrooms, showers & drains', 'Mop floors', 'Shampoo all carpets']);
 
   // Drag "Fix flashing" from Low up to Medium.
   const handle = page.getByTestId('lane-low').getByTestId('task-row').filter({ hasText: 'Fix flashing' }).getByTestId('drag-handle');
@@ -42,22 +62,22 @@ test('load starting list, then drag a task between priority lanes', async ({ pag
   await expect(page.getByTestId('lane-low').getByTestId('task-row')).toHaveCount(2);
   await expect(page.locator('.drag-ghost')).toHaveCount(0);
 
-  // Keyboard: ArrowUp promotes to High.
-  await page.getByTestId('lane-med').getByTestId('task-row').filter({ hasText: 'Fix flashing' }).getByTestId('drag-handle').focus();
+  // Keyboard: ArrowUp moves one place up within the section.
+  await page.getByTestId('lane-high').getByTestId('task-row').filter({ hasText: 'Shampoo all carpets' }).getByTestId('drag-handle').focus();
   await page.keyboard.press('ArrowUp');
-  await expect(page.getByTestId('lane-high').getByTestId('task-row').filter({ hasText: 'Fix flashing' })).toBeVisible();
+  await expect.poll(() => titles(page, 'high')).toEqual(['Clean all bathrooms, showers & drains', 'Shampoo all carpets', 'Mop floors']);
 
-  // Keyboard: focus a handle and press ArrowDown to demote.
+  // ArrowDown on the last High task crosses into the top of Medium.
   await page.getByTestId('lane-high').getByTestId('task-row').filter({ hasText: 'Mop floors' }).getByTestId('drag-handle').focus();
   await page.keyboard.press('ArrowDown');
-  await expect(page.getByTestId('lane-med').getByTestId('task-row').filter({ hasText: 'Mop floors' })).toBeVisible();
+  await expect.poll(async () => (await titles(page, 'med'))[0]).toBe('Mop floors');
 
-  // The new priority sticks after switching tabs.
-  await tab(page, 'Done').click();
+  // The order sticks after a reload (saved, not just on screen).
+  await page.reload();
   await tab(page, 'Tasks').click();
-  await page.getByRole('button', { name: 'Everyone' }).click();
-  await page.getByTestId('filter-category').selectOption({ label: 'Hire out' });
-  await expect(page.getByTestId('lane-high').getByTestId('task-row').filter({ hasText: 'Fix flashing' })).toBeVisible();
+  await hireOut(page);
+  expect(await titles(page, 'high')).toEqual(['Clean all bathrooms, showers & drains', 'Shampoo all carpets']);
+  expect((await titles(page, 'med'))[0]).toBe('Mop floors');
 
   // Drag onto the trash zone to delete, then undo.
   const victim = page.getByTestId('lane-low').getByTestId('task-row').filter({ hasText: 'Front door wood repair' });

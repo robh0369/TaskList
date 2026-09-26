@@ -1,12 +1,14 @@
 import { useEffect, useState } from 'preact/hooks';
 import { SheetsBackend } from '../api/client';
 import { DemoBackend } from '../api/mock';
-import type { AnyRecord, Backend, Collections, CollectionName, Completion, Mutation, Row, Task } from '../api/types';
+import type { AnyRecord, Backend, Collections, CollectionName, Completion, Mutation, Priority, Row, Task } from '../api/types';
 import { AuthError, COLLECTIONS } from '../api/types';
 import { DEFAULT_API_URL } from '../config';
 import { nowStamp } from '../lib/dates';
 import { uid } from '../lib/defaults';
+import { planMove } from '../lib/rank';
 import { planStarterImport } from '../lib/starter';
+import { sortTasks } from './selectors';
 
 export interface Settings {
   apiUrl: string;
@@ -203,6 +205,22 @@ export function completeTask(task: Task, by = state.settings.meId || task.assign
   };
   showToast('Done', undo);
   return undo;
+}
+
+const PRIORITY_LABEL: Record<Priority, string> = { high: 'High', med: 'Medium', low: 'Low' };
+
+/**
+ * Moves a task to a position in a priority section (see lib/rank.ts): just
+ * before `beforeId`, just after `afterId`, or at the end. A priority change
+ * shows an Undo toast; a reorder within the same section is silent.
+ */
+export function moveTask(task: Task, priority: Priority, beforeId: string | null, afterId: string | null) {
+  const lane = state.data.tasks.filter((t) => !t.deleted && !t.parentId && t.status === 'open' && t.priority === priority).sort(sortTasks);
+  const plan = planMove(lane, task, priority, beforeId, afterId);
+  if (!plan) return;
+  plan.renumbered.forEach((t) => save('tasks', t));
+  save('tasks', plan.task);
+  if (task.priority !== priority) showToast(`Moved to ${PRIORITY_LABEL[priority]}`, () => save('tasks', task));
 }
 
 /** Deletes a task and its subtasks, with an Undo toast. */

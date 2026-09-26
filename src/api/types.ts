@@ -27,6 +27,7 @@ export interface Task extends Row {
   /** YYYY-MM-DD, or '' for no due date. */
   dueDate: string;
   priority: Priority;
+  /** Position within its priority section (lower = higher up). Reuses the old effort column; see lib/rank.ts. */
   effort: number;
   status: 'open' | 'done';
   recurrence: Recurrence | null;
