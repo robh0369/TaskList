@@ -1,4 +1,4 @@
-# Home Tasks
+# TaskList
 
 A shared household task list for a two-person household. It installs on your phones like an app, and it's free to host on GitHub Pages. You can keep the data in a Google Sheet that you own.
 
