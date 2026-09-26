@@ -6,6 +6,8 @@
 // change whenever their content does). Everything else — the page, the
 // manifest, icons — is network-first, so renames and new icons show up right
 // away, with the cached copy used only when offline.
+// The demo video is left to the browser (no caching): players fetch it in
+// byte ranges, and it's too big to keep offline.
 const CACHE = 'tasklist-v4';
 
 self.addEventListener('install', (event) => {
@@ -49,6 +51,7 @@ self.addEventListener('fetch', (event) => {
   const req = event.request;
   const url = new URL(req.url);
   if (req.method !== 'GET' || url.origin !== self.location.origin) return;
+  if (url.pathname.endsWith('.mp4')) return;
 
   if (req.mode === 'navigate') {
     event.respondWith(networkFirst(req, './index.html'));

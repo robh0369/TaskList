@@ -1,6 +1,6 @@
 // Renders the 45-second highlight video: captures promo/stage.html frame by
 // frame in Chromium, then encodes H.264 + the music track with ffmpeg-static.
-//   npm run promo            full render -> promo/tasklist-highlight.mp4
+//   npm run promo            full render -> public/demo/ (shown in Settings > Demo Video)
 //   npm run promo -- --stills   one frame per scene -> promo/frames/
 import { spawn } from 'node:child_process';
 import { mkdirSync } from 'node:fs';
@@ -15,7 +15,8 @@ const DURATION = 45;
 const W = 1080;
 const H = 1920;
 const MUSIC = join(here, 'music.m4a');
-const OUT = join(here, 'tasklist-highlight.mp4');
+const OUT_DIR = join(here, '..', 'public', 'demo');
+const OUT = join(OUT_DIR, 'tasklist-demo.mp4');
 
 // Scene cuts snapped to accents in the track (~116 BPM, 8-beat phrases).
 const CUTS = [0, 4.06, 10.81, 16.35, 23.72, 28.37, 32.0, 36.65, 40.53, 45];
@@ -45,6 +46,7 @@ if (stills) {
   for (const t of list) writeFileSync(join(dir, `t${t.toFixed(2)}.png`), await frameAt(t, 'png'));
   console.log(`wrote ${list.length} stills to ${dir}`);
 } else {
+  mkdirSync(OUT_DIR, { recursive: true });
   const enc = spawn(ffmpeg, [
     '-y', '-loglevel', 'error',
     '-f', 'image2pipe', '-framerate', String(FPS), '-i', '-',
@@ -70,7 +72,9 @@ if (stills) {
   await done;
 
   const { writeFileSync } = await import('node:fs');
-  writeFileSync(join(here, 'poster.png'), await frameAt(9, 'png'));
+  // Poster: the intro logo, also used as the Settings thumbnail.
+  await page.evaluate((s) => window.renderAt(s), 2.5);
+  writeFileSync(join(OUT_DIR, 'poster.jpg'), await page.screenshot({ type: 'jpeg', quality: 80 }));
   console.log(`wrote ${OUT}`);
 }
 await browser.close();
