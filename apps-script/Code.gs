@@ -189,7 +189,7 @@ function seed(name, sheet) {
       { id: 'm2', name: 'Partner B', color: '#eb6834', updatedAt: epoch, deleted: false },
     ];
   } else if (name === 'categories') {
-    var cats = [['Kitchen', '🍳'], ['Cleaning', '🧽'], ['Laundry', '🧺'], ['Yard', '🌿'], ['Finances', '💵'], ['Errands', '🛒'], ['Home Repair', '🔧'], ['Car', '🚗'], ['Pets', '🐾']];
+    var cats = [['Kitchen', ''], ['Cleaning', ''], ['Laundry', ''], ['Yard', ''], ['Finances', ''], ['Errands', ''], ['Home Repair', ''], ['Car', ''], ['Pets', '']];
     rows = cats.map(function (c, i) {
       return { id: 'c' + (i + 1), name: c[0], icon: c[1], sortOrder: i, updatedAt: epoch, deleted: false };
     });

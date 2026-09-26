@@ -24,3 +24,19 @@ export const IconTrash = (p: P) => base(<><path d="M4 7h16M9 7V4h6v3M6 7l1 13h10
 export const IconFlag = (p: P) => base(<path d="M5 21V4h11l-2 4 2 4H5" />, p);
 export const IconSub = (p: P) => base(<><path d="M6 4v10a3 3 0 0 0 3 3h9" /><path d="m15 14 3 3-3 3" /></>, p);
 export const IconGrip = (p: P) => base(<><circle cx="9" cy="6" r="1.4" fill="currentColor" stroke="none" /><circle cx="15" cy="6" r="1.4" fill="currentColor" stroke="none" /><circle cx="9" cy="12" r="1.4" fill="currentColor" stroke="none" /><circle cx="15" cy="12" r="1.4" fill="currentColor" stroke="none" /><circle cx="9" cy="18" r="1.4" fill="currentColor" stroke="none" /><circle cx="15" cy="18" r="1.4" fill="currentColor" stroke="none" /></>, p);
+export const IconSearch = (p: P) => base(<><circle cx="11" cy="11" r="6.5" /><path d="m20 20-4.2-4.2" /></>, p);
+export const IconCheckCircle = (p: P) => base(<><circle cx="12" cy="12" r="9" /><path d="m8 12.5 2.8 2.8L16.5 9.5" /></>, p);
+export const IconInbox = (p: P) => base(<><path d="M3 13l2.5-7.5A2 2 0 0 1 7.4 4h9.2a2 2 0 0 1 1.9 1.5L21 13v5a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z" /><path d="M3 13h5l1.5 2.5h5L16 13h5" /></>, p);
+export const IconLock = (p: P) => base(<><rect x="4.5" y="10.5" width="15" height="10" rx="2.5" /><path d="M8 10.5V7.5a4 4 0 0 1 8 0v3" /></>, p);
+export const IconCloud = (p: P) => base(<path d="M7 18h10.5a4 4 0 0 0 .6-7.96A6 6 0 0 0 6.3 9.1 4.5 4.5 0 0 0 7 18z" />, p);
+export const IconUser = (p: P) => base(<><circle cx="12" cy="8" r="4" /><path d="M4 21a8 8 0 0 1 16 0" /></>, p);
+export const IconDownload = (p: P) => base(<><path d="M12 4v11M7 10l5 5 5-5" /><path d="M5 20h14" /></>, p);
+
+/** App mark: a house with a check, drawn as lines. */
+export const Logo = ({ size = 40 }: { size?: number }) => (
+  <svg width={size} height={size} viewBox="0 0 40 40" aria-hidden="true">
+    <rect width="40" height="40" rx="10" fill="var(--accent)" />
+    <path d="M11 19.5 20 12l9 7.5V28a1.5 1.5 0 0 1-1.5 1.5h-15A1.5 1.5 0 0 1 11 28z" fill="none" stroke="var(--accent-ink)" stroke-width="2" stroke-linejoin="round" />
+    <path d="m16.5 22.5 2.5 2.5 4.5-5" fill="none" stroke="var(--accent-ink)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" />
+  </svg>
+);

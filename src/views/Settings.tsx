@@ -67,7 +67,7 @@ export function SettingsView() {
           <div class="section-h"><h2>Starting list</h2></div>
           <div class="card card-pad">
             <p style={{ margin: '0 0 12px', color: 'var(--text-2)', fontSize: 15 }}>
-              Adds the {planStarterImport(data).tasks.length} tasks from Rob &amp; Rebecca's handwritten list, with their priorities and a 🧰 Hire out category.
+              Adds the {planStarterImport(data).tasks.length} tasks from Rob &amp; Rebecca's handwritten list, with their priorities and a Hire out category.
               Tasks that are already added are skipped.
             </p>
             <button class="btn primary block" data-testid="import-starter-settings" onClick={() => showToast(`Added ${importStarter()} tasks`)}>
@@ -84,7 +84,7 @@ export function SettingsView() {
           <button
             class="btn ghost block"
             style={{ justifyContent: 'flex-start', padding: '12px 16px' }}
-            onClick={() => save('categories', { id: uid('c'), name: 'New category', icon: '📌', sortOrder: categories.length, updatedAt: '', deleted: false })}
+            onClick={() => save('categories', { id: uid('c'), name: 'New category', icon: '', sortOrder: categories.length, updatedAt: '', deleted: false })}
           >
             <IconPlus /> Add category
           </button>
@@ -164,13 +164,11 @@ function MemberRow({ member, canDelete }: { member: Member; canDelete: boolean }
 
 function CategoryRow({ cat }: { cat: Category }) {
   const [name, setName] = useState(cat.name);
-  const [icon, setIcon] = useState(cat.icon);
   const commit = () => {
-    if ((name.trim() && name.trim() !== cat.name) || icon !== cat.icon) save('categories', { ...cat, name: name.trim() || cat.name, icon });
+    if (name.trim() && name.trim() !== cat.name) save('categories', { ...cat, name: name.trim() });
   };
   return (
     <div class="setting-row">
-      <input class="emoji-input" value={icon} onInput={(e) => setIcon(e.currentTarget.value)} onBlur={commit} aria-label="Icon" />
       <input value={name} onInput={(e) => setName(e.currentTarget.value)} onBlur={commit} onKeyDown={(e) => e.key === 'Enter' && (e.currentTarget as HTMLInputElement).blur()} aria-label="Category name" />
       <button class="icon-btn" aria-label={`Remove ${cat.name}`} onClick={() => remove('categories', cat)}>
         <IconClose />

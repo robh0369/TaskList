@@ -18,16 +18,16 @@ test('load starting list, then drag a task between priority lanes', async ({ pag
   // Board groups by priority; filter to the Hire out category.
   await tab(page, 'Tasks').click();
   await expect(page.getByTestId('lane-high')).toBeVisible();
-  await page.getByRole('group', { name: 'Category' }).getByRole('button', { name: /Hire out/ }).click();
+  await page.getByTestId('filter-category').selectOption({ label: 'Hire out' });
   await expect(page.getByTestId('lane-high').getByTestId('task-row')).toHaveCount(3);
   await expect(page.getByTestId('lane-low').getByTestId('task-row')).toHaveCount(3);
   if (shots) await page.screenshot({ path: `${shots}p1-board.png` });
 
   // Drag "Fix flashing" from Low up to Medium.
   const handle = page.getByTestId('lane-low').getByTestId('task-row').filter({ hasText: 'Fix flashing' }).getByTestId('drag-handle');
-  await handle.scrollIntoViewIfNeeded();
+  await handle.evaluate((el) => el.scrollIntoView({ block: 'center' }));
   const hb = (await handle.boundingBox())!;
-  const tb = (await page.getByTestId('lane-med').locator('.lane-card').boundingBox())!;
+  const tb = (await page.getByTestId('lane-med').boundingBox())!;
   await page.mouse.move(hb.x + hb.width / 2, hb.y + hb.height / 2);
   await page.mouse.down();
   await page.mouse.move(hb.x, tb.y + tb.height / 2, { steps: 12 });

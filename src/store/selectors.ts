@@ -1,4 +1,4 @@
-import type { Category, Collections, Member, Project, Task } from '../api/types';
+import type { Category, Collections, Member, Task } from '../api/types';
 import { today } from '../lib/dates';
 
 export function activeMembers(d: Collections): Member[] {
@@ -7,10 +7,6 @@ export function activeMembers(d: Collections): Member[] {
 
 export function activeCategories(d: Collections): Category[] {
   return d.categories.filter((c) => !c.deleted).sort((a, b) => a.sortOrder - b.sortOrder);
-}
-
-export function activeProjects(d: Collections): Project[] {
-  return d.projects.filter((p) => !p.deleted);
 }
 
 export function liveTasks(d: Collections): Task[] {
@@ -34,12 +30,6 @@ export function sortTasks(a: Task, b: Task): number {
   const pr = { high: 0, med: 1, low: 2 };
   if (a.priority !== b.priority) return pr[a.priority] - pr[b.priority];
   return a.createdAt.localeCompare(b.createdAt);
-}
-
-export function projectProgress(d: Collections, projectId: string) {
-  const tasks = d.tasks.filter((t) => !t.deleted && t.projectId === projectId);
-  const done = tasks.filter((t) => t.status === 'done').length;
-  return { total: tasks.length, done, pct: tasks.length ? done / tasks.length : 0 };
 }
 
 export function dueClass(date: string, now = today()): string {

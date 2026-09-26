@@ -64,7 +64,7 @@ export function TodayView({ onOpen }: { onOpen: (t: Task) => void }) {
       {group('Next 7 days', upcoming)}
       {group('High priority · no date', undatedHigh)}
       {nothing && (
-        <Empty icon="☀️" title="All clear">
+        <Empty title="All clear">
           {doneCount > 0 ? `${doneCount} done today. Nice work.` : 'Nothing due this week. Tap + to add something.'}
         </Empty>
       )}

@@ -4,11 +4,6 @@ import { save, showToast } from '../store/store';
 import { IconGrip } from './icons';
 import { TaskRow, type RowContext } from './TaskRow';
 
-const LANES: { p: Priority; label: string }[] = [
-  { p: 'high', label: 'High' },
-  { p: 'med', label: 'Medium' },
-  { p: 'low', label: 'Low' },
-];
 const ORDER: Priority[] = ['high', 'med', 'low'];
 const LABEL: Record<Priority, string> = { high: 'High', med: 'Medium', low: 'Low' };
 
@@ -35,11 +30,12 @@ function setPriority(task: Task, p: Priority) {
 }
 
 /**
- * Tasks grouped into High / Medium / Low lanes. Drag a task by its handle to
- * another lane to change its priority. Works with touch and mouse (pointer
- * events), and with the keyboard: focus a handle and press ↑ / ↓.
+ * One continuous list ranked High → Medium → Low, with a thin divider per
+ * level. Drag a task by its handle past a divider to change its priority.
+ * Works with touch and mouse (pointer events), and with the keyboard:
+ * focus a handle and press ↑ / ↓.
  */
-export function PriorityBoard({ tasks, ctx }: { tasks: Task[]; ctx: RowContext }) {
+export function RankedList({ tasks, ctx }: { tasks: Task[]; ctx: RowContext }) {
   const [drag, setDrag] = useState<Drag | null>(null);
   const [over, setOver] = useState<Priority | null>(null);
   const pointerY = useRef(0);
@@ -97,17 +93,17 @@ export function PriorityBoard({ tasks, ctx }: { tasks: Task[]; ctx: RowContext }
   };
 
   return (
-    <div class={`board ${drag ? 'is-dragging' : ''}`}>
-      <p class="hint" style={{ margin: '0 4px 4px' }}>Drag a task by its ⠿ handle to change its priority.</p>
-      {LANES.map(({ p, label }) => {
-        const items = tasks.filter((t) => t.priority === p);
-        return (
-          <section key={p} class={`section lane lane-${p} ${over === p && drag ? 'lane-over' : ''}`} data-lane={p} data-testid={`lane-${p}`}>
-            <div class="section-h">
-              <h2 class={p === 'high' ? 'danger' : ''}>{label}</h2>
-              <span class="count">{items.length}</span>
-            </div>
-            <div class="card lane-card">
+    <div class={`ranked ${drag ? 'is-dragging' : ''}`}>
+      <div class="ranked-card">
+        {ORDER.map((p) => {
+          const items = tasks.filter((t) => t.priority === p);
+          return (
+            <div key={p} class={`rank-group rank-${p} ${over === p && drag ? 'lane-over' : ''}`} data-lane={p} data-testid={`lane-${p}`}>
+              <div class="rank-divider">
+                <span class="rank-swatch" aria-hidden="true" />
+                <span class="rank-label">{LABEL[p]}</span>
+                <span class="rank-count">{items.length}</span>
+              </div>
               {items.map((t) => (
                 <TaskRow
                   key={t.id}
@@ -131,13 +127,14 @@ export function PriorityBoard({ tasks, ctx }: { tasks: Task[]; ctx: RowContext }
                   }
                 />
               ))}
-              {items.length === 0 && <div class="lane-empty">Drop tasks here</div>}
+              {items.length === 0 && <div class="rank-empty">No {LABEL[p].toLowerCase()} priority tasks</div>}
             </div>
-          </section>
-        );
-      })}
+          );
+        })}
+      </div>
+      <p class="hint ranked-hint">Drag the handle on a task to move it to another priority.</p>
       {drag && (
-        <div class="drag-ghost" style={{ left: drag.x - drag.dx, top: drag.y - drag.dy, width: drag.width }} aria-hidden="true">
+        <div class={`drag-ghost prio-${over ?? drag.task.priority}`} style={{ left: drag.x - drag.dx, top: drag.y - drag.dy, width: drag.width }} aria-hidden="true">
           {drag.task.title}
         </div>
       )}

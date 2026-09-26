@@ -2,7 +2,7 @@ import type { ComponentChildren } from 'preact';
 import { useEffect, useRef } from 'preact/hooks';
 import type { Member } from '../api/types';
 import { dismissToast, useStore } from '../store/store';
-import { IconClose } from './icons';
+import { IconCheckCircle, IconClose } from './icons';
 
 export function initials(name: string): string {
   const parts = name.trim().split(/\s+/);
@@ -94,14 +94,14 @@ export function ToastHost() {
   );
 }
 
-export function Empty({ icon, title, children }: { icon: string; title: string; children?: ComponentChildren }) {
+export function Empty({ title, children, icon }: { title: string; children?: ComponentChildren; icon?: ComponentChildren }) {
   return (
     <div class="empty">
-      <div class="big" aria-hidden="true">
-        {icon}
+      <div class="empty-icon" aria-hidden="true">
+        {icon ?? <IconCheckCircle />}
       </div>
       <strong>{title}</strong>
-      {children}
+      {children && <span>{children}</span>}
     </div>
   );
 }

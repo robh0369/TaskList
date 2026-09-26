@@ -4,14 +4,14 @@ import { addDays, parseISODate, today, weekdayName } from '../lib/dates';
 import { blankTask, uid } from '../lib/defaults';
 import { parseQuickAdd } from '../lib/quickadd';
 import { describeRecurrence } from '../lib/recurrence';
-import { activeCategories, activeMembers, activeProjects, sortTasks } from '../store/selectors';
+import { activeCategories, activeMembers, sortTasks } from '../store/selectors';
 import { completeTask, remove, reopenTask, save, showToast, useStore } from '../store/store';
 import { Avatar, Seg, Sheet } from './common';
 import { IconCheck, IconClose, IconPlus, IconSend, IconTrash } from './icons';
 
 export interface TaskSheetProps {
   task?: Task;
-  /** Defaults for a new task (e.g. projectId when adding from a project). */
+  /** Defaults for a new task. */
   defaults?: Partial<Task>;
   onClose: () => void;
 }
@@ -23,7 +23,6 @@ export function TaskSheet({ task, defaults, onClose }: TaskSheetProps) {
   const isNew = !task;
   const members = activeMembers(data);
   const categories = activeCategories(data);
-  const projects = activeProjects(data).filter((p) => p.status === 'active' || p.id === task?.projectId);
 
   const [draft, setDraft] = useState<Task>(
     () => task ?? blankTask({ assigneeId: settings.meId, createdBy: settings.meId, ...defaults }),
@@ -169,36 +168,22 @@ export function TaskSheet({ task, defaults, onClose }: TaskSheetProps) {
 
       <div class="section-h" style={{ marginTop: 14 }}><h2>Details</h2></div>
       <div class="card">
-        <div class="row">
-          <label class="field">
-            <span class="label">Category</span>
-            <select value={draft.categoryId} onChange={(e) => set({ categoryId: e.currentTarget.value })}>
-              <option value="">None</option>
-              {categories.map((c) => <option key={c.id} value={c.id}>{c.icon} {c.name}</option>)}
-            </select>
-          </label>
-          <label class="field">
-            <span class="label">Project</span>
-            <select value={draft.projectId} onChange={(e) => set({ projectId: e.currentTarget.value })} disabled={!!draft.parentId}>
-              <option value="">None</option>
-              {projects.map((p) => <option key={p.id} value={p.id}>{p.name}</option>)}
-            </select>
-          </label>
-        </div>
         <div class="field">
           <span class="label">Priority</span>
-          <Seg label="Priority" value={draft.priority} onChange={(v) => set({ priority: v })} options={[['low', 'Low'], ['med', 'Medium'], ['high', 'High']]} />
-        </div>
-        <div class="field">
-          <span class="label">Effort</span>
           <Seg
-            label="Effort"
-            value={draft.effort}
-            onChange={(v) => set({ effort: v })}
-            options={[[1, '1'], [2, '2'], [3, '3'], [4, '4'], [5, '5']]}
+            label="Priority"
+            value={draft.priority}
+            onChange={(v) => set({ priority: v })}
+            options={[['high', 'High'], ['med', 'Medium'], ['low', 'Low']]}
           />
-          <div class="hint">1 = a few minutes · 5 = most of a day. Used for the workload report.</div>
         </div>
+        <label class="field">
+          <span class="label">Category</span>
+          <select value={draft.categoryId} onChange={(e) => set({ categoryId: e.currentTarget.value })}>
+            <option value="">None</option>
+            {categories.map((c) => <option key={c.id} value={c.id}>{c.name}</option>)}
+          </select>
+        </label>
       </div>
 
       {!isNew && task && !task.parentId && <Subtasks parent={task} />}
@@ -273,7 +258,7 @@ function Subtasks({ parent }: { parent: Task }) {
   const add = () => {
     const title = text.trim();
     if (!title) return;
-    save('tasks', blankTask({ title, parentId: parent.id, projectId: parent.projectId, categoryId: parent.categoryId, assigneeId: parent.assigneeId, createdBy: settings.meId, effort: 1 }));
+    save('tasks', blankTask({ title, parentId: parent.id, categoryId: parent.categoryId, assigneeId: parent.assigneeId, priority: parent.priority, createdBy: settings.meId }));
     setText('');
   };
   return (
