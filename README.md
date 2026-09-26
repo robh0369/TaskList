@@ -14,9 +14,9 @@ A shared chore and project list for a two-person household. It installs on your 
 
 ## 1. Put the app online (GitHub Pages)
 
-1. In this repo on GitHub, go to **Settings → Pages**. Under **Build and deployment → Source**, choose **GitHub Actions**.
-2. Merge to `main`, or run the **Test & deploy to GitHub Pages** workflow from the **Actions** tab.
-3. The site appears at `https://<your-username>.github.io/TaskList/`.
+1. Every push to `main` runs the **Test & deploy to GitHub Pages** workflow. It tests and builds the app, then publishes the built site to the `gh-pages` branch. You can also start it by hand from the **Actions** tab.
+2. One-time setup: go to **Settings → Pages → Build and deployment**, set **Source** to **Deploy from a branch**, set **Branch** to **`gh-pages`** with folder **`/ (root)`**, and click **Save**.
+3. The site appears at `https://<your-username>.github.io/TaskList/` within a minute or two.
 
 The app opens in **demo mode** with sample data that's saved on that one device only. That's handy for trying it out. To share one list between both phones, connect a Google Sheet (step 2).
 
