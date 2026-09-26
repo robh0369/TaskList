@@ -29,7 +29,7 @@ function nextWeekday(from: string, target: number): string {
  * Parses shorthand like "Mow lawn fri @Rob #Yard every 2 weeks !high".
  *   @name     assignee (member name prefix, or @both)
  *   #cat      category (name prefix)
- *   !high/!low priority
+ *   !high/!mid/!low priority
  *   today, tomorrow, mon..sun, in N days
  *   daily, weekly, monthly, every N days|weeks|months, every mon[,thu]
  */
@@ -72,8 +72,9 @@ export function parseQuickAdd(
     result.categoryId = hit.id;
   });
 
-  take(/\s!(high|low|med)\b/i, (m) => {
-    result.priority = m[1].toLowerCase() as Priority;
+  take(/\s!(high|hi|low|lo|med|mid|medium)\b/i, (m) => {
+    const w = m[1].toLowerCase();
+    result.priority = w.startsWith('h') ? 'high' : w.startsWith('l') ? 'low' : 'med';
   });
 
   // Recurrence first, so "every mon" isn't read as a due date.

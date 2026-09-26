@@ -187,7 +187,7 @@ export function TaskSheet({ task, defaults, onClose }: TaskSheetProps) {
         </div>
         <div class="field">
           <span class="label">Priority</span>
-          <Seg label="Priority" value={draft.priority} onChange={(v) => set({ priority: v })} options={[['low', 'Low'], ['med', 'Normal'], ['high', 'High']]} />
+          <Seg label="Priority" value={draft.priority} onChange={(v) => set({ priority: v })} options={[['low', 'Low'], ['med', 'Medium'], ['high', 'High']]} />
         </div>
         <div class="field">
           <span class="label">Effort</span>

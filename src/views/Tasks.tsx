@@ -1,16 +1,36 @@
 import { useState } from 'preact/hooks';
 import type { Task } from '../api/types';
-import { Avatar, Empty } from '../components/common';
+import { Avatar, Empty, Seg } from '../components/common';
+import { PriorityBoard } from '../components/PriorityBoard';
 import { TaskRow } from '../components/TaskRow';
 import { useRowContext } from '../components/useRowContext';
 import { activeCategories, activeMembers, activeProjects, liveTasks, sortTasks } from '../store/selectors';
 import { useStore } from '../store/store';
 
 type Status = 'open' | 'done' | 'all';
+type Mode = 'priority' | 'list';
+
+const MODE_KEY = 'tasklist.tasksMode';
+function readMode(): Mode {
+  try {
+    return localStorage.getItem(MODE_KEY) === 'list' ? 'list' : 'priority';
+  } catch {
+    return 'priority';
+  }
+}
 
 export function TasksView({ onOpen }: { onOpen: (t: Task) => void }) {
   const { data } = useStore();
   const ctx = useRowContext(data, onOpen);
+  const [mode, setModeState] = useState<Mode>(readMode);
+  const setMode = (m: Mode) => {
+    setModeState(m);
+    try {
+      localStorage.setItem(MODE_KEY, m);
+    } catch {
+      /* per-device preference only */
+    }
+  };
   const [q, setQ] = useState('');
   const [who, setWho] = useState('');
   const [cat, setCat] = useState('');
@@ -25,7 +45,7 @@ export function TasksView({ onOpen }: { onOpen: (t: Task) => void }) {
   const needle = q.trim().toLowerCase();
   const tasks = liveTasks(data)
     .filter((t) => !t.parentId)
-    .filter((t) => status === 'all' || t.status === status)
+    .filter((t) => (mode === 'priority' ? t.status === 'open' : status === 'all' || t.status === status))
     .filter((t) => !who || t.assigneeId === who || (who !== 'none' && t.assigneeId === 'both') || (who === 'none' && !t.assigneeId))
     .filter((t) => !cat || t.categoryId === cat)
     .filter((t) => !proj || t.projectId === proj)
@@ -37,14 +57,17 @@ export function TasksView({ onOpen }: { onOpen: (t: Task) => void }) {
 
   return (
     <div class="content">
+      <Seg label="View" value={mode} onChange={setMode} options={[['priority', 'By priority'], ['list', 'List']]} />
+      <div style={{ height: 10 }} />
       <input class="search" type="search" placeholder="Search tasks" value={q} onInput={(e) => setQ(e.currentTarget.value)} aria-label="Search tasks" />
 
       <div class="chips" style={{ marginTop: 10 }} role="group" aria-label="Status">
-        {(['open', 'done', 'all'] as Status[]).map((s) => (
-          <button key={s} class="chip" aria-pressed={status === s} onClick={() => setStatus(s)}>
-            {s === 'open' ? 'To do' : s === 'done' ? 'Done' : 'All'}
-          </button>
-        ))}
+        {mode === 'list' &&
+          (['open', 'done', 'all'] as Status[]).map((s) => (
+            <button key={s} class="chip" aria-pressed={status === s} onClick={() => setStatus(s)}>
+              {s === 'open' ? 'To do' : s === 'done' ? 'Done' : 'All'}
+            </button>
+          ))}
         <button class="chip" aria-pressed={repeating} onClick={() => setRepeating(!repeating)}>↻ Recurring</button>
       </div>
       <div class="chips" role="group" aria-label="Assignee">
@@ -72,6 +95,13 @@ export function TasksView({ onOpen }: { onOpen: (t: Task) => void }) {
         </div>
       )}
 
+      {mode === 'priority' ? (
+        tasks.length || needle || who || cat || proj || repeating ? (
+          <PriorityBoard tasks={tasks} ctx={ctx} />
+        ) : (
+          <Empty icon="🗂️" title="No open tasks">Tap + to add one.</Empty>
+        )
+      ) : (
       <section class="section">
         <div class="section-h">
           <h2>{tasks.length} {tasks.length === 1 ? 'task' : 'tasks'}</h2>
@@ -82,6 +112,7 @@ export function TasksView({ onOpen }: { onOpen: (t: Task) => void }) {
           <Empty icon="🔍" title="No matching tasks">Try clearing a filter.</Empty>
         )}
       </section>
+      )}
     </div>
   );
 }
